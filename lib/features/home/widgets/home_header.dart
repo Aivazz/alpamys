@@ -81,23 +81,15 @@ class HomeHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Merhaba, Günaydın',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: R.sp(13),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(width: R.xs),
                             const Icon(
                               Icons.location_on_rounded,
                               color: AppColors.primary,
                               size: 13,
                             ),
-                            const SizedBox(width: 2),
-                            Expanded(
+                            const SizedBox(width: 4),
+                            Flexible(
                               child: Text(
                                 displayLocation,
                                 overflow: TextOverflow.ellipsis,
@@ -111,6 +103,15 @@ class HomeHeader extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 4),
+                        Text(
+                          'Merhaba, Günaydın',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: R.sp(13),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
                         Text(
                           '$name !',
                           maxLines: 1,

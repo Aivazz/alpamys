@@ -112,13 +112,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final name     = widget.product['name']?.toString() ?? '';
     final category = widget.product['category']?.toString() ?? '';
     final desc = _getProductDescription(name, category);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF9FAFB),
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(32),
             topRight: Radius.circular(32),
           ),
@@ -132,7 +133,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 width: 40,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB),
+                  color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -166,7 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                color: const Color(0xFFF1F3F5),
+                                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F3F5),
                                 child: Center(
                                   child: Icon(
                                     UIcons.regularRounded.picture,
@@ -197,8 +198,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 children: [
                                   Text(
                                     name,
-                                    style: const TextStyle(
-                                      color: AppColors.textDark,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : AppColors.textDark,
                                       fontSize: 22,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -206,8 +207,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     widget.product['brand'] as String? ?? 'Alpamys Nutrition',
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey : AppColors.textSecondary,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -233,9 +234,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: isDark ? const Color(0xFF2E2E2E) : Colors.white,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                                      border: Border.all(color: isDark ? const Color(0xFF3E3E3E) : const Color(0xFFF3F4F6), width: 1.5),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.03),
@@ -248,7 +249,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       child: Icon(
                                         isFav ? Icons.favorite : Icons.favorite_border,
                                         size: 20,
-                                        color: isFav ? const Color(0xFFED5151) : AppColors.textDark,
+                                        color: isFav ? const Color(0xFFED5151) : (isDark ? Colors.white : AppColors.textDark),
                                       ),
                                     ),
                                   ),
@@ -258,46 +259,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ],
                         ),
 
-                        const SizedBox(height: 12),
-
-                        // Rating row
-                        Row(
-                          children: [
-                            Icon(
-                              UIcons.regularRounded.star,
-                              color: const Color(0xFFF59E0B),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.product['rating']?.toString() ?? '4.8',
-                              style: const TextStyle(
-                                color: AppColors.textDark,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '(230)',
-                              style: TextStyle(
-                                color: AppColors.textSecondary.withOpacity(0.8),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-
                         const SizedBox(height: 16),
-                        const Divider(color: Color(0xFFE5E7EB), height: 1),
+                        Divider(color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE5E7EB), height: 1),
                         const SizedBox(height: 16),
 
                         // Description Section
-                        const Text(
+                        Text(
                           'Açıklama',
                           style: TextStyle(
-                            color: AppColors.textDark,
+                            color: isDark ? Colors.white : AppColors.textDark,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
@@ -311,8 +281,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           },
                           child: RichText(
                             text: TextSpan(
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: isDark ? Colors.grey.shade400 : AppColors.textSecondary,
                                 fontSize: 13.5,
                                 height: 1.5,
                                 fontWeight: FontWeight.w500,
@@ -348,10 +318,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Aroma',
                                 style: TextStyle(
-                                  color: AppColors.textDark,
+                                  color: isDark ? Colors.white : AppColors.textDark,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -367,17 +337,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                       decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFFF1F3F5) : Colors.white,
+                                        color: isSelected ? const Color(0xFFA3CB24).withOpacity(0.2) : (isDark ? const Color(0xFF131313) : Colors.white),
                                         borderRadius: BorderRadius.circular(14),
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFFA3CB24) : const Color(0xFFE5E7EB),
+                                          color: isSelected ? const Color(0xFFA3CB24) : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE5E7EB)),
                                           width: 1.5,
                                         ),
                                       ),
                                       child: Text(
                                         flavor,
                                         style: TextStyle(
-                                          color: isSelected ? Colors.black : AppColors.textSecondary,
+                                          color: isSelected ? (isDark ? const Color(0xFFA3CB24) : Colors.black) : (isDark ? Colors.grey : AppColors.textSecondary),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
@@ -393,10 +363,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         // Size Section
 
-                        const Text(
+                        Text(
                           'Boyut / Paket',
                           style: TextStyle(
-                            color: AppColors.textDark,
+                            color: isDark ? Colors.white : AppColors.textDark,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
@@ -416,17 +386,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFFF1F3F5) : Colors.white,
+                                    color: isSelected ? const Color(0xFFA3CB24).withOpacity(0.2) : (isDark ? const Color(0xFF131313) : Colors.white),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: isSelected ? const Color(0xFFA3CB24) : const Color(0xFFE5E7EB),
+                                      color: isSelected ? const Color(0xFFA3CB24) : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE5E7EB)),
                                       width: 1.5,
                                     ),
                                   ),
                                   child: Text(
                                     size,
                                     style: TextStyle(
-                                      color: isSelected ? Colors.black : AppColors.textSecondary,
+                                      color: isSelected ? (isDark ? const Color(0xFFA3CB24) : Colors.black) : (isDark ? Colors.grey : AppColors.textSecondary),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -449,20 +419,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? const Color(0xFF131313) : Colors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
                   blurRadius: 16,
                   offset: const Offset(0, -4),
                 ),
               ],
-              border: const Border(
-                top: BorderSide(color: Color(0xFFF3F4F6), width: 1.5),
+              border: Border(
+                top: BorderSide(color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF3F4F6), width: 1.5),
               ),
             ),
             child: SafeArea(
@@ -473,10 +443,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         'Fiyat',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: isDark ? Colors.grey : AppColors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -484,8 +454,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       const SizedBox(height: 4),
                       Text(
                         widget.product['price'] as String? ?? '0 TL',
-                        style: const TextStyle(
-                          color: AppColors.textDark,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : AppColors.textDark,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                         ),
@@ -506,7 +476,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: Colors.black,
+                          color: isDark ? AppColors.primary : Colors.black,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -516,11 +486,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             ),
                           ],
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
                             'Satın Al',
                             style: TextStyle(
-                              color: Color(0xFFA3CB24), // Lime Green
+                              color: isDark ? Colors.black : const Color(0xFFA3CB24), // Lime Green
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.5,

@@ -633,28 +633,13 @@ out center tags;
                       ),
                     
                     Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.35)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.fitness_center_rounded, color: AppColors.primary, size: 14),
-                            SizedBox(width: 6),
-                            Text(
-                              'SPOR SALONLARI',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
-                                  letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
+                      child: Text(
+                        'SPOR SALONLARI',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : Colors.black,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),

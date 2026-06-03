@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uicons/uicons.dart';
 import '../../../core/constants/app_colors.dart';
 
 class Ingredient {
@@ -828,25 +829,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
                     ),
                   ),
                   Positioned(
-                    top: 14,
-                    right: 14,
-                    child: GestureDetector(
-                      onTap: () => _toggleFavorite(recipe.id),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          color: isFav ? Colors.red : const Color(0xFF64748B),
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
                     bottom: 14,
                     left: 14,
                     child: Container(
@@ -979,18 +961,29 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
   Widget _buildHeader(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           width: double.infinity,
-          height: topPadding + 68,
-          decoration: const BoxDecoration(
-            color: Color(0xFF131313),
-            borderRadius: BorderRadius.only(
+          height: topPadding + 80,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(32),
               bottomRight: Radius.circular(32),
             ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
           ),
         ),
         Padding(
@@ -1016,26 +1009,26 @@ class _RecipesScreenState extends State<RecipesScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Icon(
-                                Icons.arrow_back_ios_new_rounded,
+                                UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
-                    const Center(
+                    Center(
                       child: Text(
                         'TARİFLER',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: isDark ? Colors.white : Colors.black,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -1182,29 +1175,20 @@ class RecipeDetailScreen extends StatefulWidget {
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   int _servings = 1;
   late List<bool> _checkedIngredients;
-  late bool _isFavorite;
-
   @override
   void initState() {
     super.initState();
-    _isFavorite = widget.isFavorite;
     _checkedIngredients = List<bool>.filled(widget.recipe.ingredients.length, false);
-  }
-
-  void _toggleFavLocal() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
-    widget.onFavoriteToggled();
   }
 
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
     final totalCalories = widget.recipe.baseCalories * _servings;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF131313) : Colors.white,
       body: Stack(
         children: [
           // Scrollable body
@@ -1225,9 +1209,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       return Container(
                         height: 360,
                         width: double.infinity,
-                        color: const Color(0xFFE2E8F0),
-                        child: const Center(
-                          child: Icon(Icons.restaurant_rounded, color: Color(0xFF94A3B8), size: 48),
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                        child: Center(
+                          child: Icon(Icons.restaurant_rounded, color: isDark ? Colors.grey : const Color(0xFF94A3B8), size: 48),
                         ),
                       );
                     },
@@ -1239,9 +1223,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   offset: const Offset(0, -32),
                   child: Container(
                     width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(32),
                         topRight: Radius.circular(32),
                       ),
@@ -1279,8 +1263,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         // Title
                         Text(
                           widget.recipe.name,
-                          style: const TextStyle(
-                            color: Color(0xFF0F172A),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                             letterSpacing: -0.6,
@@ -1291,18 +1275,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         // Prep Time & Difficulty Row
                         Row(
                           children: [
-                            Icon(Icons.access_time_rounded, color: Colors.grey.shade400, size: 16),
+                            Icon(Icons.access_time_rounded, color: isDark ? Colors.grey.shade500 : Colors.grey.shade400, size: 16),
                             const SizedBox(width: 6),
                             Text(
                               widget.recipe.prepTime,
-                              style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 18),
-                            Icon(Icons.bar_chart_rounded, color: Colors.grey.shade400, size: 16),
+                            Icon(Icons.bar_chart_rounded, color: isDark ? Colors.grey.shade500 : Colors.grey.shade400, size: 16),
                             const SizedBox(width: 6),
                             Text(
                               widget.recipe.difficulty,
-                              style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -1314,7 +1298,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF7FEE7), // Soft lime-green background
+                              color: isDark ? const Color(0xFF283618).withOpacity(0.4) : const Color(0xFFF7FEE7), // Soft lime-green background
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(16),
                                 bottomRight: Radius.circular(16),
@@ -1328,21 +1312,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'TARİFLERİN FAYDALARI',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFF4D7C0F),
+                                    color: isDark ? const Color(0xFFA3CB24) : const Color(0xFF4D7C0F),
                                     letterSpacing: 0.8,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   widget.recipe.benefit!,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13.5,
-                                    color: Color(0xFF3F6212),
+                                    color: isDark ? Colors.white70 : const Color(0xFF3F6212),
                                     fontWeight: FontWeight.w500,
                                     fontStyle: FontStyle.italic,
                                     height: 1.45,
@@ -1469,12 +1453,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         const SizedBox(height: 32),
 
                         // Ingredients Section
-                        const Text(
+                        Text(
                           'MALZEMELER',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -1498,10 +1482,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: isChecked ? const Color(0xFFF8FAFC) : Colors.white,
+                                  color: isChecked
+                                      ? (isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF8FAFC))
+                                      : (isDark ? const Color(0xFF131313) : Colors.white),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isChecked ? const Color(0xFFE2E8F0) : const Color(0xFFEDF2F7),
+                                    color: isChecked
+                                        ? (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0))
+                                        : (isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEDF2F7)),
                                     width: 1.2,
                                   ),
                                 ),
@@ -1512,10 +1500,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                       width: 22,
                                       height: 22,
                                       decoration: BoxDecoration(
-                                        color: isChecked ? AppColors.primary : Colors.white,
+                                        color: isChecked ? AppColors.primary : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: isChecked ? Colors.transparent : const Color(0xFFCBD5E1),
+                                          color: isChecked ? Colors.transparent : (isDark ? const Color(0xFF454545) : const Color(0xFFCBD5E1)),
                                           width: 1.5,
                                         ),
                                       ),
@@ -1531,7 +1519,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                         ing.displayAmount(_servings),
                                         style: TextStyle(
                                           fontSize: 14.5,
-                                          color: isChecked ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                                          color: isChecked
+                                              ? const Color(0xFF94A3B8)
+                                              : (isDark ? Colors.white : const Color(0xFF1E293B)),
                                           fontWeight: isChecked ? FontWeight.normal : FontWeight.w600,
                                           decoration: isChecked ? TextDecoration.lineThrough : null,
                                         ),
@@ -1546,12 +1536,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         const SizedBox(height: 32),
 
                         // Step Stepper Section
-                        const Text(
+                        Text(
                           'HAZIRLANIŞI',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -1573,7 +1563,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                         width: 32,
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF131313),
+                                          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFF131313),
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
@@ -1598,7 +1588,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                         Expanded(
                                           child: Container(
                                             width: 2,
-                                            color: const Color(0xFFE2E8F0),
+                                            color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFE2E8F0),
                                             margin: const EdgeInsets.symmetric(vertical: 8),
                                           ),
                                         ),
@@ -1623,9 +1613,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                                           const SizedBox(height: 4),
                                           Text(
                                             widget.recipe.instructions[index],
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14.5,
-                                              color: Color(0xFF334155),
+                                              color: isDark ? Colors.white70 : const Color(0xFF334155),
                                               height: 1.55,
                                               fontWeight: FontWeight.w500,
                                             ),
@@ -1651,45 +1641,20 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Positioned(
             top: topPadding + 12,
             left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white24, width: 1),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white),
-                    ),
-                  ),
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.4),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white24, width: 1),
                 ),
-                GestureDetector(
-                  onTap: _toggleFavLocal,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white24, width: 1),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        size: 18,
-                        color: _isFavorite ? Colors.red : Colors.white,
-                      ),
-                    ),
-                  ),
+                child: const Center(
+                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white),
                 ),
-              ],
+              ),
             ),
           ),
         ],

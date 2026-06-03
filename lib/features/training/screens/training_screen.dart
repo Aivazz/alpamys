@@ -197,19 +197,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Widget _buildHeader(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Dark Top Background Block (just like in the market!)
         Container(
           width: double.infinity,
           height: topPadding + 220,
-          decoration: const BoxDecoration(
-            color: Color(0xFF131313),
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(32),
               bottomRight: Radius.circular(32),
             ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
           ),
         ),
         // Header Content
@@ -237,44 +247,28 @@ class _TrainingScreenState extends State<TrainingScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Icon(
                                 UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
                     
-                    // Center title badge
                     Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.primary.withOpacity(0.25)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(UIcons.regularRounded.gym, color: AppColors.primary, size: 12),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'ANTRENMAN PLANLARI',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
+                      child: Text(
+                        'ANTRENMANLAR',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white : Colors.black,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -282,12 +276,12 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Sınırlarını Zorla,\nHedefine Ulaş',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : Colors.black,
                   height: 1.15,
                   letterSpacing: -0.5,
                 ),
@@ -297,7 +291,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                 'Uzmanlar tarafından hazırlanan profesyonel programlarla gücünü ve dayanıklılığını keşfet.',
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.white.withOpacity(0.6),
+                  color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.6),
                   height: 1.45,
                 ),
               ),

@@ -86,31 +86,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     }
   }
 
-  Future<void> _sendPasswordResetEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || user.email == null) {
-      CustomFeedback.show(context, 'E-posta adresi bulunamadı.', type: FeedbackType.warning);
-      return;
-    }
 
-    setState(() => _isLoading = true);
-    try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: user.email!);
-      if (mounted) {
-        CustomFeedback.show(
-          context,
-          '${user.email} adresine şifre sıfırlama bağlantısı gönderildi.',
-          type: FeedbackType.success,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        CustomFeedback.show(context, 'E-posta gönderilemedi: $e', type: FeedbackType.warning);
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   Widget _buildPasswordField({
     required TextEditingController controller,
@@ -447,89 +423,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 28),
 
-                    // Reset via email
-                    Text(
-                      'ŞİFREMİ UNUTTUM',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: isDark ? Colors.grey : Colors.grey.shade600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: _isLoading ? null : _sendPasswordResetEmail,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
-                            width: 1.5,
-                          ),
-                          boxShadow: isDark
-                              ? null
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.02),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF3C7).withOpacity(isDark ? 0.15 : 0.4),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.mail_outline_rounded,
-                                size: 22,
-                                color: Color(0xFFD97706),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'E-posta ile Sıfırla',
-                                    style: TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark ? Colors.white : Colors.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'E-postanıza sıfırlama bağlantısı gönderilir',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              UIcons.regularRounded.angle_right,
-                              size: 14,
-                              color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
 
                     const SizedBox(height: 32),
                   ],

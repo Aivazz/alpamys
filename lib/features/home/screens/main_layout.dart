@@ -42,7 +42,7 @@ class _MainLayoutState extends State<MainLayout>
     );
     _screens = [
       RepaintBoundary(child: HomeScreen(onMenuPressed: _toggleMenu)),
-      const RepaintBoundary(child: AIAssistantScreen()),
+      const RepaintBoundary(child: MarketScreen(showBackButton: false)),
       const RepaintBoundary(child: SubscribersScreen(showBackButton: false)),
       RepaintBoundary(
         child: ProfileScreen(onBackPress: () => setState(() => _currentIndex = 0)),
@@ -149,14 +149,14 @@ class _MainLayoutState extends State<MainLayout>
                         },
                       ),
                       _menuItem(
-                        icon: UIconMarket(color: iconCol, size: R.iconMd),
-                        label: 'Market',
+                        icon: Icon(Icons.auto_awesome, color: iconCol, size: R.iconMd),
+                        label: 'Alpamys AI',
                         divColor: divColor,
                         subColor: subColor,
                         onTap: () {
                           _toggleMenu();
                           Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => const MarketScreen()));
+                              MaterialPageRoute(builder: (_) => const AIAssistantScreen(isFullScreen: true)));
                         },
                       ),
                       _menuItem(
@@ -337,15 +337,6 @@ class _MainLayoutState extends State<MainLayout>
                     : CustomBottomNavBar(
                         currentIndex: _currentIndex,
                         onTap: (index) {
-                          if (index == 1) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AIAssistantScreen(isFullScreen: true),
-                              ),
-                            );
-                            return;
-                          }
                           if (index != _currentIndex) {
                             HapticFeedback.selectionClick();
                             setState(() => _currentIndex = index);

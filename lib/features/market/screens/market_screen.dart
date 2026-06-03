@@ -11,7 +11,8 @@ import '../../favorites/services/favorites_service.dart';
 import '../../favorites/screens/market_favorites_screen.dart';
 
 class MarketScreen extends StatefulWidget {
-  const MarketScreen({super.key});
+  final bool showBackButton;
+  const MarketScreen({super.key, this.showBackButton = true});
 
   @override
   State<MarketScreen> createState() => _MarketScreenState();
@@ -144,27 +145,28 @@ class _MarketScreenState extends State<MarketScreen> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              Positioned(
-                                left: 0,
-                                child: GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Icon(
-                                        UIcons.regularRounded.angle_left,
-                                        size: 16,
-                                        color: Colors.white,
+                              if (widget.showBackButton && Navigator.canPop(context))
+                                Positioned(
+                                  left: 0,
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.pop(context),
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Icon(
+                                          UIcons.regularRounded.angle_left,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
                               const Center(
                                 child: Text(
                                   'MARKET',

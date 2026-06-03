@@ -72,7 +72,7 @@ class CustomBottomNavBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             buildNavItem(0, UIconHome(color: iconColor(0), size: 22)),
-            buildNavItem(1, UIconSparkles(color: iconColor(1), size: 22)),
+            buildNavItem(1, UIconMarket(color: iconColor(1), size: 22)),
             buildNavItem(2, UIconAboneler(color: iconColor(2), size: 22)),
             buildNavItem(3, UIconProfile(color: iconColor(3), size: 22)),
           ],

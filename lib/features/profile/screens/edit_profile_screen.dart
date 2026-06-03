@@ -235,6 +235,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (confirmed == true) {
       final pwd = passwordCtrl.text.trim();
       if (pwd.isEmpty) {
+        if (!mounted) return;
         CustomFeedback.show(context, 'Mevcut şifrenizi girmelisiniz.', type: FeedbackType.warning);
         return;
       }
@@ -335,7 +336,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
           ),
-          if (suffixIcon != null) suffixIcon,
+          ?suffixIcon,
         ],
       ),
     );

@@ -480,9 +480,9 @@ class _CartScreenState extends State<CartScreen> {
                 }).toList();
                 await OrderHistoryService().addOrder(cartItems);
                 _cartService.clear();
-                if (!context.mounted) return;
+                if (!mounted) return;
                 CustomFeedback.show(
-                  context,
+                  context, // ignore: use_build_context_synchronously
                   'Siparişiniz başarıyla oluşturuldu! Alpamys\'i seçtiğiniz için teşekkürler.',
                   type: FeedbackType.success,
                 );

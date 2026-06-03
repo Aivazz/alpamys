@@ -34,8 +34,10 @@ class CachedImage extends StatelessWidget {
       img = _buildError(phColor, isDark);
     } else {
       // memCacheWidth limits GPU texture size → less VRAM usage
-      final memW = width != null ? (width! * 2).round() : null;
-      final memH = height != null ? (height! * 2).round() : null;
+      // Guard against double.infinity (e.g. width: double.infinity) to avoid
+      // "Unsupported operation: Infinity or NaN toInt" crash
+      final memW = (width != null && width!.isFinite)  ? (width!  * 2).round() : null;
+      final memH = (height != null && height!.isFinite) ? (height! * 2).round() : null;
       img = Image.network(
         url,
         width: width,

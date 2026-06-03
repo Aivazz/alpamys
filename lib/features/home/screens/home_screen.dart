@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../../core/constants/app_colors.dart';
-import '../widgets/home_header.dart';
-import '../../notifications/screens/notifications_screen.dart';
+import '../../../core/services/api_service.dart';
+import '../../../core/utils/responsive.dart';
+import '../../../common_widgets/media/cached_image.dart';
+import '../../profile/providers/profile_provider.dart';
+import '../../subscribers/services/subscription_service.dart';
+import '../../subscribers/screens/qr_scanner_screen.dart';
+import '../../subscribers/screens/subscribers_screen.dart';
 import '../../training/screens/workout_detail_screen.dart';
 import '../../training/screens/training_screen.dart';
 import '../../recipes/screens/recipes_screen.dart';
-import '../../../core/services/api_service.dart';
 import '../../market/screens/market_screen.dart';
 import '../../market/screens/product_detail_screen.dart';
-import '../../subscribers/screens/subscribers_screen.dart';
+import '../widgets/home_header.dart';
+import '../../payment/widgets/payment_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onMenuPressed;
@@ -78,6 +84,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadProducts();
+    SubscriptionService().loadSubscriptions().then((_) {
+      if (mounted) {
+        setState(() {
+          _hasActiveSubscription = SubscriptionService().hasActivePass;
+        });
+      }
+    });
   }
 
   void _loadProducts() {
@@ -99,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    R.init(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -110,12 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
               HomeHeader(
                 onMenuTap: widget.onMenuPressed ?? () {
                   Scaffold.of(context).openDrawer();
-                },
-                onNotificationsTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                  );
                 },
                 onSearchChanged: (query) {
                   // Handle search filter logic
@@ -238,16 +246,11 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(20),
             child: Stack(
               children: [
-                Image.network(
-                  workout['image'] as String,
-                  height: 180,
+                CachedImage(
+                  url: workout['image'] as String,
+                  height: R.gymCardImageH * 0.85,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 180,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.image_not_supported_rounded, size: 40, color: Colors.grey),
-                  ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ],
             ),
@@ -607,154 +610,723 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSubscriptionBannerSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'SPOR SALONLARI',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-            color: _textColor,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SubscribersScreen(showBackButton: true)),
+  bool _hasActiveSubscription = false;
+  int _selectedPlanIndex = 1;
+
+  final List<Map<String, dynamic>> _plans = [
+    {
+      'title': '1 Aylık Paket',
+      'subtitle': 'Aylık yenilenir',
+      'price': '1.290 TL',
+      'total': '1.290 TL',
+      'discount': '',
+      'months': 1,
+    },
+    {
+      'title': '3 Aylık Paket',
+      'subtitle': 'En popüler seçenek',
+      'price': '1.090 TL',
+      'total': '3.270 TL',
+      'discount': '%20 Tasarruf',
+      'months': 3,
+    },
+    {
+      'title': '12 Aylık Paket',
+      'subtitle': 'En iyi fiyat garantisi',
+      'price': '790 TL',
+      'total': '9.480 TL',
+      'discount': '%40 Tasarruf',
+      'months': 12,
+    },
+  ];
+
+
+
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const p = 0.017453292519943295;
+    final a = 0.5 - cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) *
+            (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
+  }
+
+  List<Map<String, dynamic>> _generateRealisticGyms(String cityName, double lat, double lon) {
+    final List<String> unsplashGymImages = [
+      'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=500&auto=format&fit=crop&q=80',
+    ];
+
+    final int seed = cityName.codeUnits.fold(0, (prev, element) => prev + element);
+    final Random rand = Random(seed);
+
+    final List<String> gymNameTemplates = [
+      'Fitness Center',
+      'Sport Club',
+      'Life & Sport Club',
+      'Premium Fitness',
+      'Gold Gym',
+      'Champion Club',
+      'Elite Fitness Center',
+      'Dynamic Sport Club',
+    ];
+
+    final List<String> streets = [
+      'Atatürk Caddesi',
+      'Cumhuriyet Caddesi',
+      'İstiklal Caddesi',
+      'Fatih Sultan Mehmet Caddesi',
+      'Bülent Ecevit Bulvarı',
+      'Menderes Caddesi',
+      'İnönü Caddesi',
+      'Hürriyet Caddesi',
+    ];
+
+    List<Map<String, dynamic>> list = [];
+    for (int i = 0; i < gymNameTemplates.length; i++) {
+      final name = gymNameTemplates[i];
+      
+      final double latOffset = (rand.nextDouble() - 0.5) * 0.007;
+      final double lonOffset = (rand.nextDouble() - 0.5) * 0.01;
+      final double gymLat = lat + latOffset;
+      final double gymLon = lon + lonOffset;
+
+      final double dist = _calculateDistance(lat, lon, gymLat, gymLon);
+      final String street = streets[i % streets.length];
+      final String address = '$street No: ${rand.nextInt(120) + 1}, $cityName';
+
+      final image = unsplashGymImages[i % unsplashGymImages.length];
+      final List<String> images = [
+        image,
+        unsplashGymImages[(i + 1) % unsplashGymImages.length],
+        unsplashGymImages[(i + 2) % unsplashGymImages.length],
+      ];
+
+      final double rating = double.parse((4.2 + rand.nextDouble() * 0.7).toStringAsFixed(1));
+      final int reviews = rand.nextInt(250) + 20;
+
+      final String phone = '+90 378 ${rand.nextInt(900) + 100} ${rand.nextInt(9000) + 1000}';
+      final String website = 'www.${gymNameTemplates[i].toLowerCase().replaceAll('&', '').replaceAll(' ', '')}$cityName.com'.toLowerCase();
+      const priceTiers = [890, 990, 1090, 1190, 1290, 1390, 1490, 1590, 1690, 1790];
+      final String approxPrice = '~${priceTiers[(seed + i) % priceTiers.length]} TL';
+      
+      final String gymDescription = '$name, $cityName şehrinin en popüler spor salonlarından biridir. Modern ekipmanları, güler yüzlü eğitmenleri ve geniş çalışma alanları ile hedeflerinize ulaşmanız için ideal bir ortam sunar. Adres: $address. Çalışma saatleri: 08:00 - 22:00. İletişim: $phone. Web sitesi: $website.';
+
+      list.add({
+        'id': 'gen_${cityName.toLowerCase()}_$i',
+        'name': name,
+        'image': image,
+        'images': images,
+        'rating': rating,
+        'reviews': reviews,
+        'distance': '${dist.toStringAsFixed(1)} km',
+        'address': address,
+        'price': approxPrice,
+        'tags': ['Gym', if (i % 3 == 0) 'Pool', if (i % 4 == 0) 'Spa'],
+        'latitude': gymLat,
+        'longitude': gymLon,
+        'description': gymDescription,
+      });
+    }
+
+    return list;
+  }
+
+  List<Map<String, dynamic>> get _gyms {
+    final location = ProfileProvider().profileData['location']?.toString() ?? '';
+    final String cityName = location.replaceAll(' (GPS)', '').trim();
+    final double lat = (ProfileProvider().profileData['latitude'] as num?)?.toDouble() ?? 43.2389;
+    final double lon = (ProfileProvider().profileData['longitude'] as num?)?.toDouble() ?? 76.8897;
+    return _generateRealisticGyms(cityName.isNotEmpty ? cityName : 'City', lat, lon);
+  }
+
+  void _showSubscriptionPackagesSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Paket Seçimi Yapın',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Tek üyelikle spor salonuna sınırsız erişim sağlayın.',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Column(
+                    children: _plans.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final plan = entry.value;
+                      final isSelected = _selectedPlanIndex == idx;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setModalState(() {
+                            _selectedPlanIndex = idx;
+                          });
+                          setState(() {});
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                                ? (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9)) 
+                                : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0)),
+                              width: isSelected ? 2 : 1.2,
+                            ),
+                            boxShadow: isSelected 
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(0.08),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected ? AppColors.primary : (isDark ? Colors.grey.shade600 : Colors.grey.shade400),
+                                    width: isSelected ? 6.5 : 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      plan['title'] as String,
+                                      style: TextStyle(
+                                        color: isDark ? Colors.white : Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      plan['subtitle'] as String,
+                                      style: TextStyle(
+                                        color: isDark ? Colors.grey : Colors.grey.shade600,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    plan['price'] as String,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 17,
+                                      color: isDark ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                  Text(
+                                    '/ Ay',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey : Colors.grey.shade600,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 18),
+
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showPaymentBottomSheet(context);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                           BoxShadow(
+                             color: AppColors.primary.withOpacity(0.2),
+                             blurRadius: 10,
+                             offset: const Offset(0, 4),
+                           )
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Devam Et (${_plans[_selectedPlanIndex]['price']} / Ay)',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF131313), Color(0xFF252525)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+        );
+      },
+    );
+  }
+
+  void _showPaymentBottomSheet(BuildContext targetContext) {
+    final selectedPlan = _plans[_selectedPlanIndex];
+    showPaymentSheet(
+      context: targetContext,
+      title: 'Alpamys Pass Satın Al',
+      subtitle: '${selectedPlan['title']} — ${selectedPlan['total']} ödeme alınacak.',
+      confirmLabel: 'Güvenli Ödeme Yap',
+      primaryColor: AppColors.primary,
+      onConfirm: () => _showLoadingAndSuccessNotification(targetContext),
+    );
+  }
+
+  void _showLoadingAndSuccessNotification(BuildContext targetContext) {
+    showDialog(
+      context: targetContext,
+      barrierDismissible: false,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      },
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted || !targetContext.mounted) return;
+      Navigator.pop(targetContext);
+      
+      showDialog(
+        context: targetContext,
+        builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Dialog(
+            backgroundColor: isDark ? const Color(0xFF131313) : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: Padding(
+              padding: const EdgeInsets.all(28.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 48),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Ödeme Başarılı!',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Alpamys Pass üyeliğiniz aktif edildi. Keyifli antrenmanlar dileriz!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.7),
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _hasActiveSubscription = true;
+                      });
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Harika',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  void _showQRScannerSimulation(BuildContext targetContext) {
+    Navigator.push(
+      targetContext,
+      MaterialPageRoute(
+        builder: (context) => const QrScannerScreen(title: 'Salon Girişi'),
+      ),
+    );
+  }
+
+  Widget _buildGymCard(Map<String, dynamic> gym) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
             child: Stack(
               children: [
-                Positioned(
-                  right: -50,
-                  top: -50,
-                  child: Container(
-                    width: 160,
-                    height: 160,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary.withOpacity(0.08),
-                    ),
-                  ),
+                Image.network(
+                  gym['image'] as String,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 180,
+                      width: double.infinity,
+                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(
+                          Icons.fitness_center_rounded,
+                          color: AppColors.primary,
+                          size: 40,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                Positioned(
-                  right: -20,
-                  bottom: -60,
+                Positioned.fill(
                   child: Container(
-                    width: 140,
-                    height: 140,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.02),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.4), width: 1),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.fitness_center_rounded, color: AppColors.primary, size: 12),
-                                SizedBox(width: 4),
-                                Text(
-                                  'PREMIUM SALONLAR',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: Colors.white70,
-                            size: 14,
-                          ),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.25),
+                          Colors.transparent,
                         ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
-                      const SizedBox(height: 18),
-                      const Text(
-                        'Şehrinizdeki En İyi Salonlar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 14,
+                  right: 14,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.65),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, color: Color(0xFFFFD60A), size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${gym['rating']}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Modern altyapı ve geniş olanaklara sahip premium spor salonlarını, havuzları ve stüdyoları keşfedin.',
-                        style: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 12.5,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        width: double.infinity,
-                        height: 48,
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 14,
+                  left: 14,
+                  child: Row(
+                    children: List<String>.from(gym['tags'] as List).map((t) {
+                      return Container(
+                        margin: const EdgeInsets.only(right: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Salonları Keşfet',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w900,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
+                          ],
+                        ),
+                        child: Text(
+                          t,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        gym['name'] as String,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 17,
+                          color: isDark ? Colors.white : Colors.black,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        gym['price'] as String,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        gym['address'] as String,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          gym['distance'] as String,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionBannerSection() {
+    final gymsList = _gyms;
+    final topGyms = gymsList.take(3).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'SPOR SALONLARI',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: _textColor,
+                letterSpacing: 0.5,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SubscribersScreen(showBackButton: true)),
+                );
+              },
+              child: const Text(
+                'Tümünü Gör',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 16),
+        if (topGyms.isEmpty)
+          const Center(
+            child: Text(
+              'Yakınınızda spor salonu bulunamadı.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          )
+        else
+          Column(
+            children: topGyms.map((gym) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GymDetailScreen(
+                        gym: gym,
+                        hasActiveSubscription: _hasActiveSubscription,
+                        onSubscriptionSuccess: () {
+                          if (mounted) {
+                            setState(() {
+                              _hasActiveSubscription = true;
+                            });
+                          }
+                        },
+                        showQRScanner: () => _showQRScannerSimulation(context),
+                        showPackages: _showSubscriptionPackagesSheet,
+                      ),
+                    ),
+                  );
+                },
+                child: _buildGymCard(gym),
+              );
+            }).toList(),
+          ),
       ],
     );
   }

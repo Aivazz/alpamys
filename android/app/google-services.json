@@ -12,7 +12,20 @@
           "package_name": "com.example.alpamys"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "537535855427-jnkpmtpt1rrq32ct63j07so0mtr34qrt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.alpamys",
+            "certificate_hash": "13f849740ce37a38da66416f0e58ec3771df094f"
+          }
+        },
+        {
+          "client_id": "537535855427-p3t0j4delfj5hif0ke3ghldj5benehk7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyACPgTn3M3aSVNNEDrCVc28JN0ozsW88vQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "537535855427-p3t0j4delfj5hif0ke3ghldj5benehk7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

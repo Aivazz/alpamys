@@ -59,6 +59,22 @@ func SyncUser(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: " + err.Error()})
 			return
 		}
+	} else {
+		hasChanges := false
+		if user.Email != emailStr {
+			user.Email = emailStr
+			hasChanges = true
+		}
+		if nameStr != "" && user.FullName != nameStr {
+			user.FullName = nameStr
+			hasChanges = true
+		}
+		if hasChanges {
+			if saveErr := database.DB.Save(&user).Error; saveErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user profile during sync: " + saveErr.Error()})
+				return
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -191,4 +207,39 @@ func CheckUserExists(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"exists": true})
+}
+
+type AddressInput struct {
+	Address string `json:"address" binding:"required"`
+}
+
+// UpdateAddress обновляет адрес доставки пользователя в БД
+func UpdateAddress(c *gin.Context) {
+	firebaseUID, exists := c.Get("firebaseUID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	uidStr := firebaseUID.(string)
+
+	var input AddressInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var user models.User
+	if err := database.DB.First(&user, "id = ?", uidStr).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User profile not found"})
+		return
+	}
+
+	user.Address = input.Address
+	if err := database.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update address: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Address updated successfully", "address": user.Address})
 }

@@ -124,26 +124,26 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   void updateProfile({
-    required String name,
-    required String phone,
-    required String email,
-    required double weight,
-    required String weightUnit,
-    required double height,
-    required String heightUnit,
-    required String gender,
-    required int age,
+    String? name,
+    String? phone,
+    String? email,
+    double? weight,
+    String? weightUnit,
+    double? height,
+    String? heightUnit,
+    String? gender,
+    int? age,
     String? avatar,
   }) async {
-    _profileData['name'] = name;
-    _profileData['phone'] = phone;
-    _profileData['email'] = email;
-    _profileData['weight'] = weight;
-    _profileData['weightUnit'] = weightUnit;
-    _profileData['height'] = height;
-    _profileData['heightUnit'] = heightUnit;
-    _profileData['gender'] = gender;
-    _profileData['age'] = age;
+    if (name != null) _profileData['name'] = name;
+    if (phone != null) _profileData['phone'] = phone;
+    if (email != null) _profileData['email'] = email;
+    if (weight != null) _profileData['weight'] = weight;
+    if (weightUnit != null) _profileData['weightUnit'] = weightUnit;
+    if (height != null) _profileData['height'] = height;
+    if (heightUnit != null) _profileData['heightUnit'] = heightUnit;
+    if (gender != null) _profileData['gender'] = gender;
+    if (age != null) _profileData['age'] = age;
     if (avatar != null) {
       _profileData['avatar'] = avatar;
     }
@@ -152,15 +152,15 @@ class ProfileProvider extends ChangeNotifier {
     // 1. Persist locally so values survive restarts
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('full_name', name);
-      await prefs.setString('email', email);
-      await prefs.setString('phone', phone);
-      await prefs.setString('gender', gender);
-      await prefs.setDouble('weight', weight);
-      await prefs.setString('weight_unit', weightUnit);
-      await prefs.setDouble('height', height);
-      await prefs.setString('height_unit', heightUnit);
-      await prefs.setInt('age', age);
+      if (name != null) await prefs.setString('full_name', name);
+      if (email != null) await prefs.setString('email', email);
+      if (phone != null) await prefs.setString('phone', phone);
+      if (gender != null) await prefs.setString('gender', gender);
+      if (weight != null) await prefs.setDouble('weight', weight);
+      if (weightUnit != null) await prefs.setString('weight_unit', weightUnit);
+      if (height != null) await prefs.setDouble('height', height);
+      if (heightUnit != null) await prefs.setString('height_unit', heightUnit);
+      if (age != null) await prefs.setInt('age', age);
       if (avatar != null) {
         await prefs.setString('avatar', avatar);
       }
@@ -169,25 +169,27 @@ class ProfileProvider extends ChangeNotifier {
     }
 
     // 2. Sync display name to Firebase Auth
-    try {
-      final user = Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
-      if (user != null) {
-        await user.updateDisplayName(name);
+    if (name != null) {
+      try {
+        final user = Firebase.apps.isNotEmpty ? FirebaseAuth.instance.currentUser : null;
+        if (user != null) {
+          await user.updateDisplayName(name);
+        }
+      } catch (e) {
+        debugPrint("Error updating Firebase displayName: $e");
       }
-    } catch (e) {
-      debugPrint("Error updating Firebase displayName: $e");
     }
 
     // 3. Save back to backend
     ApiService.saveOnboarding(
-      fullName: name,
-      gender: gender,
+      fullName: _profileData['name'],
+      gender: _profileData['gender'],
       favoriteActivity: _profileData['favoriteActivity'] ?? 'Running',
-      age: age,
-      weight: weight,
-      weightUnit: weightUnit.toLowerCase(),
-      height: height,
-      heightUnit: heightUnit.toLowerCase(),
+      age: _profileData['age'],
+      weight: _profileData['weight'],
+      weightUnit: (_profileData['weightUnit'] ?? 'KG').toString().toLowerCase(),
+      height: _profileData['height'],
+      heightUnit: (_profileData['heightUnit'] ?? 'CM').toString().toLowerCase(),
       fitnessLevel: _profileData['fitnessLevel'] ?? 'Beginner',
       goal: _profileData['goal'] ?? 'Improve fitness',
     );

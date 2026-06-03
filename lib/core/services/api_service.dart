@@ -311,6 +311,34 @@ class ApiService {
     }
   }
 
+  // Update address on the Go backend database
+  static Future<bool> updateAddress(String address) async {
+    try {
+      final token = await _getIdToken();
+      if (token == null) return false;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/address'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'address': address}),
+      ).timeout(const Duration(seconds: 3));
+
+      if (response.statusCode == 200) {
+        debugPrint('Address saved to Go backend successfully.');
+        return true;
+      } else {
+        debugPrint('Saving address failed: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Backend unreachable, could not save address: $e');
+      return false;
+    }
+  }
+
   // Check if email already exists in Go database or local preferences
   static Future<bool> checkUserExists(String email) async {
     try {

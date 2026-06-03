@@ -76,6 +76,7 @@ func main() {
 			user.POST("/sync", handlers.SyncUser)
 			user.POST("/onboarding", handlers.SaveOnboarding)
 			user.GET("/profile", handlers.GetProfile)
+			user.POST("/address", handlers.UpdateAddress)
 
 			// НОВЫЙ ЭНДПОИНТ: Получение сгенерированного плана тренировок
 			user.GET("/workout-plan", handlers.GetWorkoutPlan)

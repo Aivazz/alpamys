@@ -16,3 +16,7 @@ class SignUpSubmittedEvent extends AuthEvent {
 
   const SignUpSubmittedEvent(this.fullName, this.email, this.password);
 }
+
+class GoogleSignInSubmittedEvent extends AuthEvent {
+  const GoogleSignInSubmittedEvent();
+}

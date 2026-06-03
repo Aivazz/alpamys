@@ -177,9 +177,10 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
+      backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -189,12 +190,21 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
               Container(
                 width: double.infinity,
                 height: topPadding + 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF131313),
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(32),
                     bottomRight: Radius.circular(32),
                   ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                 ),
               ),
               Padding(
@@ -212,26 +222,26 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Icon(
                                 UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const Center(
+                      Center(
                         child: Text(
                           'KONUM AYARLARI',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : Colors.black,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -251,16 +261,19 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
             child: Container(
               padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
-                border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +283,7 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withOpacity(0.15),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -284,11 +297,11 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Geçerli Konum',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.textSecondary,
+                                color: isDark ? Colors.grey : Colors.grey.shade600,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
                               ),
@@ -296,9 +309,9 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                             const SizedBox(height: 4),
                             Text(
                               _currentLocationName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
-                                color: AppColors.textDark,
+                                color: isDark ? Colors.white : Colors.black,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -307,27 +320,31 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                       ),
                     ],
                   ),
-                  const Divider(height: 32, thickness: 1, color: Color(0xFFF3F4F6)),
+                  Divider(
+                    height: 32,
+                    thickness: 1,
+                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Kanal',
                             style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: isDark ? Colors.grey : Colors.grey.shade600,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'GPS / Uydudan Otomatik',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textDark,
+                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -336,20 +353,20 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
+                          Text(
                             'Koordinatlar',
                             style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.textSecondary,
+                              color: isDark ? Colors.grey : Colors.grey.shade600,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             _coordinatesText,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textDark,
+                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                               fontWeight: FontWeight.bold,
                               fontFamily: 'monospace',
                             ),
@@ -374,9 +391,9 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
               child: ElevatedButton(
                 onPressed: _isLocating ? null : _determineLocation,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.black38,
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -391,7 +408,7 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                             ),
                           ),
                           SizedBox(width: 12),
@@ -400,6 +417,7 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
+                              color: Colors.black,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -410,6 +428,7 @@ class _LocationSettingScreenState extends State<LocationSettingScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
+                          color: Colors.black,
                           letterSpacing: 0.5,
                         ),
                       ),

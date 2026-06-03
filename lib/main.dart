@@ -9,6 +9,7 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
 import 'features/home/screens/main_layout.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -70,6 +71,7 @@ class AlpamysApp extends StatelessWidget {
             '/signup': (context) => const SignupScreen(),
             '/home': (context) => const MainLayout(),
             '/onboarding': (context) => const OnboardingScreen(),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
           },
         );
       },

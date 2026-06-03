@@ -8,6 +8,7 @@ import 'security_screen.dart';
 import 'privacy_policy_screen.dart';
 import '../../../core/theme/theme_provider.dart';
 import 'location_setting_screen.dart';
+import 'add_address_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,22 +18,14 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _darkModeEnabled = false;
-  bool _notificationsEnabled = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _darkModeEnabled = ThemeProvider().isDarkMode;
-  }
-
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(left: 24.0, top: 20.0, bottom: 8.0),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: isDark ? Colors.grey : Colors.grey.shade600,
           fontSize: 11,
           fontWeight: FontWeight.w900,
           letterSpacing: 1.2,
@@ -45,33 +38,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
     final profileProvider = ProfileProvider();
+    final themeProvider = ThemeProvider();
 
     return ListenableBuilder(
-      listenable: profileProvider,
+      listenable: themeProvider,
       builder: (context, child) {
-        final profileData = profileProvider.profileData;
-        final name = profileData['name']?.toString() ?? '';
-        final email = profileData['email']?.toString() ?? '';
-        final location = profileData['location']?.toString() ?? 'Almatı';
+        final isDark = themeProvider.isDarkMode;
 
-        return Scaffold(
-          backgroundColor: const Color(0xFFF9F9F9),
+        return ListenableBuilder(
+          listenable: profileProvider,
+          builder: (context, child) {
+            final profileData = profileProvider.profileData;
+            final name = profileData['name']?.toString() ?? '';
+            final email = profileData['email']?.toString() ?? '';
+            final location = profileData['location']?.toString() ?? 'Almatı';
+
+            return Scaffold(
+              backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
           body: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Dark Header (scrolls with the page, centered title)
+                // 1. Header (scrolls with the page, centered title)
                 Stack(
                   children: [
                     Container(
                       width: double.infinity,
                       height: topPadding + 80,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF131313),
-                        borderRadius: BorderRadius.only(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(32),
                           bottomRight: Radius.circular(32),
                         ),
+                        boxShadow: isDark
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                       ),
                     ),
                     Padding(
@@ -89,26 +97,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Center(
                                     child: Icon(
                                       UIcons.regularRounded.angle_left,
                                       size: 16,
-                                      color: Colors.white,
+                                      color: isDark ? Colors.white : Colors.black,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            const Center(
+                            Center(
                               child: Text(
                                 'AYARLAR',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.white,
+                                  color: isDark ? Colors.white : Colors.black,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -128,16 +136,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
                       ],
-                      border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -192,8 +203,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               Text(
                                 name.isNotEmpty ? name : 'Yükleniyor...',
-                                style: const TextStyle(
-                                  color: AppColors.textDark,
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -201,28 +212,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 email.isNotEmpty ? email : 'E-posta yükleniyor...',
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
+                                style: TextStyle(
+                                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Badge Pro
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFECFDF5),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFA7F3D0), width: 1),
-                                ),
-                                child: const Text(
-                                  'Pro Üye',
-                                  style: TextStyle(
-                                    color: Color(0xFF047857),
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
                                 ),
                               ),
                             ],
@@ -234,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
 
                 // 3. Sections of Settings
-                _buildSectionHeader('Hesap'),
+                _buildSectionHeader('Hesap', isDark),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
@@ -254,28 +247,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       _SettingsTile(
-                        icon: UIcons.regularRounded.bell,
-                        title: 'Bildirimler',
-                        subtitle: 'Hatırlatıcılar ve antrenör bildirimleri',
-                        trailing: Switch.adaptive(
-                          value: _notificationsEnabled,
-                          onChanged: (val) {
-                            setState(() {
-                              _notificationsEnabled = val;
-                            });
-                            CustomFeedback.show(
-                              context,
-                              val ? 'Bildirimler açıldı!' : 'Bildirimler kapatıldı!',
-                              type: val ? FeedbackType.success : FeedbackType.info,
-                            );
-                          },
-                          activeColor: Colors.black,
-                          activeTrackColor: AppColors.primary,
-                        ),
-                        onTap: () {},
-                      ),
-                      const SizedBox(height: 10),
-                      _SettingsTile(
                         icon: UIcons.regularRounded.lock,
                         title: 'Güvenlik ve Şifre',
                         subtitle: 'Şifre sıfırlama ve hesap koruması',
@@ -288,11 +259,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         },
                       ),
+                      const SizedBox(height: 10),
+                      _SettingsTile(
+                        icon: UIcons.regularRounded.marker,
+                        title: 'Adres Ekle',
+                        subtitle: 'Gönderim adresi ekleme ve yönetimi',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddAddressScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
 
-                _buildSectionHeader('Uygulama Tercihleri'),
+                _buildSectionHeader('Uygulama Tercihleri', isDark),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
@@ -302,19 +287,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'Karanlık Mod',
                         subtitle: 'Gece antrenmanları için koyu tasarım',
                         trailing: Switch.adaptive(
-                          value: _darkModeEnabled,
+                          value: isDark,
                           onChanged: (val) {
-                            setState(() {
-                              _darkModeEnabled = val;
-                            });
-                            ThemeProvider().toggleTheme(val);
+                            themeProvider.toggleTheme(val);
                             CustomFeedback.show(
                               context,
                               val ? 'Karanlık mod aktif edildi!' : 'Aydınlık moda geçildi!',
                               type: FeedbackType.info,
                             );
                           },
-                          activeColor: Colors.black,
+                          activeColor: isDark ? Colors.white : Colors.black,
                           activeTrackColor: AppColors.primary,
                         ),
                         onTap: () {},
@@ -333,20 +315,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: 10),
-                      _SettingsTile(
-                        icon: UIcons.regularRounded.globe,
-                        title: 'Dil Tercihi',
-                        subtitle: 'Türkçe (TR)',
-                        onTap: () {
-                          CustomFeedback.show(context, 'Dil seçenekleri yakında eklenecek!', type: FeedbackType.info);
-                        },
-                      ),
                     ],
                   ),
                 ),
 
-                _buildSectionHeader('Destek & Yasal'),
+                _buildSectionHeader('Destek & Yasal', isDark),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Column(
@@ -355,7 +328,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: UIcons.regularRounded.interrogation,
                         title: 'Yardım ve Destek',
                         subtitle: 'Sıkça sorulan sorular ve bize ulaşın',
-                        onTap: () => _showHelpBottomSheet(context),
+                        onTap: () => _showHelpBottomSheet(context, isDark),
                       ),
                       const SizedBox(height: 10),
                       _SettingsTile(
@@ -381,10 +354,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const Text(
+                      Text(
                         'Alpamys AI v1.0.0',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: isDark ? Colors.grey : Colors.grey.shade600,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -393,7 +366,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Text(
                         '© 2026 Alpamys. Tüm Hakları Saklıdır.',
                         style: TextStyle(
-                          color: AppColors.textSecondary.withOpacity(0.6),
+                          color: isDark ? Colors.grey.withOpacity(0.6) : Colors.grey.shade500,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -409,18 +382,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
-  }
+  },
+);
+}
 
-  void _showHelpBottomSheet(BuildContext context) {
+  void _showHelpBottomSheet(BuildContext context, bool isDark) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF131313) : Colors.white,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(32),
               topRight: Radius.circular(32),
             ),
@@ -437,30 +412,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5E7EB),
+                  color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(2.5),
                 ),
               ),
               const SizedBox(height: 24),
               // Header title
-              const Text(
+              Text(
                 'YARDIM VE DESTEK',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: Colors.black,
+                  color: isDark ? Colors.white : Colors.black,
                   letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Text(
                   'Alpamys ekibi 7/24 hizmetinizde. Bize aşağıdaki kanallardan ulaşabilirsiniz.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF6B7280),
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     fontWeight: FontWeight.w500,
                     height: 1.5,
                   ),
@@ -480,6 +455,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'WhatsApp Canlı Destek',
                       subtitle: 'Anında mesajlaşma ve hızlı çözüm',
                       trailing: 'BAĞLAN',
+                      isDark: isDark,
                       onTap: () {
                         CustomFeedback.show(context, 'WhatsApp hattına yönlendiriliyorsunuz...', type: FeedbackType.info);
                       },
@@ -493,6 +469,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'E-posta İletişim',
                       subtitle: 'destek@alpamys.kz',
                       trailing: 'KOPYALA',
+                      isDark: isDark,
                       onTap: () {
                         CustomFeedback.show(context, 'E-posta adresi kopyalandı!', type: FeedbackType.success);
                       },
@@ -506,6 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       title: 'Çağrı Merkezi',
                       subtitle: '+7 (700) 000-00-00',
                       trailing: 'ARA',
+                      isDark: isDark,
                       onTap: () {
                         CustomFeedback.show(context, 'Müşteri hizmetleri aranıyor...', type: FeedbackType.info);
                       },
@@ -516,8 +494,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const SizedBox(height: 24),
               // FAQ Header
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -525,7 +503,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF9CA3AF),
+                      color: isDark ? Colors.grey : Colors.grey.shade600,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -543,14 +521,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildFAQCard(
                       question: 'Şifremi Nasıl Değiştiririm?',
                       answer: 'Güvenlik ve Şifre bölümünden anında yeni bir şifre talep edebilirsiniz.',
+                      isDark: isDark,
                     ),
                     _buildFAQCard(
                       question: 'Abonelik İptali Nasıl Yapılır?',
                       answer: 'Profil / Aboneliklerim ekranından dilediğiniz an iptal edebilirsiniz.',
+                      isDark: isDark,
                     ),
                     _buildFAQCard(
                       question: 'Yapay Zeka Nasıl Çalışır?',
                       answer: 'Gelişmiş algoritmalarımız form durumunuza göre antrenman yazar.',
+                      isDark: isDark,
                     ),
                   ],
                 ),
@@ -569,6 +550,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String subtitle,
     required String trailing,
+    required bool isDark,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -576,9 +558,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
         ),
         child: Row(
           children: [
@@ -598,19 +592,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
-                      color: Colors.black,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF6B7280),
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -619,7 +613,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -627,7 +621,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: Colors.black,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -638,18 +632,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildFAQCard({required String question, required String answer}) {
+  Widget _buildFAQCard({
+    required String question,
+    required String answer,
+    required bool isDark,
+  }) {
     return Container(
       width: 240,
       margin: const EdgeInsets.only(right: 12, bottom: 8, top: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -660,10 +661,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Text(
             question,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
-              color: Colors.black,
+              color: isDark ? Colors.white : Colors.black,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -672,9 +673,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               answer,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF4B5563),
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
                 height: 1.4,
               ),
@@ -705,21 +706,25 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.01),
+              color: Colors.black.withOpacity(isDark ? 0.1 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
-          border: Border.all(color: const Color(0xFFF3F4F6), width: 1.2),
+          border: Border.all(
+            color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
         ),
         child: Row(
           children: [
@@ -727,12 +732,12 @@ class _SettingsTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
+                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: AppColors.textDark,
+                color: isDark ? Colors.white : Colors.black,
                 size: 20,
               ),
             ),
@@ -744,8 +749,8 @@ class _SettingsTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: AppColors.textDark,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
                       fontSize: 14.5,
                       fontWeight: FontWeight.w700,
                     ),
@@ -754,8 +759,8 @@ class _SettingsTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -767,7 +772,7 @@ class _SettingsTile extends StatelessWidget {
             // Trailing
             trailing ?? Icon(
               UIcons.regularRounded.angle_right,
-              color: AppColors.textSecondary,
+              color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
               size: 14,
             ),
           ],

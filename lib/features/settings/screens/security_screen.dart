@@ -77,6 +77,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
       if (mounted) {
         CustomFeedback.show(context, msg, type: FeedbackType.warning);
       }
+    } catch (e) {
+      if (mounted) {
+        CustomFeedback.show(context, 'Hata: $e', type: FeedbackType.warning);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -112,6 +116,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     required TextEditingController controller,
     required String label,
     required bool isVisible,
+    required bool isDark,
     required VoidCallback onToggle,
     String? Function(String?)? validator,
   }) {
@@ -120,10 +125,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF4B5563),
+            color: isDark ? Colors.grey : Colors.grey.shade600,
             letterSpacing: 0.2,
           ),
         ),
@@ -132,26 +137,32 @@ class _SecurityScreenState extends State<SecurityScreen> {
           controller: controller,
           obscureText: !isVisible,
           validator: validator,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: Colors.black,
+            color: isDark ? Colors.white : Colors.black,
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: const Color(0xFFF9FAFB),
+            fillColor: isDark ? const Color(0xFF131313) : const Color(0xFFF1F5F9),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.black, width: 1.5),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -179,9 +190,10 @@ class _SecurityScreenState extends State<SecurityScreen> {
     final topPadding = MediaQuery.of(context).padding.top;
     final user = FirebaseAuth.instance.currentUser;
     final email = user?.email ?? '';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
+      backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
       body: Column(
         children: [
           // Header
@@ -190,12 +202,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
               Container(
                 width: double.infinity,
                 height: topPadding + 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF131313),
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(32),
                     bottomRight: Radius.circular(32),
                   ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                 ),
               ),
               Padding(
@@ -214,26 +235,26 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Icon(
                                 UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const Center(
+                      Center(
                         child: Text(
                           'GÜVENLİK VE ŞİFRE',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : Colors.black,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -257,9 +278,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                        boxShadow: isDark
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                       ),
                       child: Row(
                         children: [
@@ -267,13 +300,13 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
+                              color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               UIcons.regularRounded.lock,
                               size: 20,
-                              color: AppColors.textDark,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -281,21 +314,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Hesap E-postası',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: AppColors.textSecondary,
+                                    color: isDark ? Colors.grey : Colors.grey.shade600,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   email.isNotEmpty ? email : 'Yükleniyor...',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textDark,
+                                    color: isDark ? Colors.white : Colors.black,
                                   ),
                                 ),
                               ],
@@ -308,12 +341,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     const SizedBox(height: 28),
 
                     // Change password section
-                    const Text(
+                    Text(
                       'ŞİFRE DEĞİŞTİR',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF9CA3AF),
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -322,9 +355,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
+                        boxShadow: isDark
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.02),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ],
                       ),
                       child: Column(
                         children: [
@@ -332,6 +377,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             controller: _currentPasswordController,
                             label: 'Mevcut Şifre',
                             isVisible: _showCurrent,
+                            isDark: isDark,
                             onToggle: () => setState(() => _showCurrent = !_showCurrent),
                             validator: (val) {
                               if (val == null || val.isEmpty) return 'Mevcut şifreyi girin';
@@ -343,6 +389,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             controller: _newPasswordController,
                             label: 'Yeni Şifre',
                             isVisible: _showNew,
+                            isDark: isDark,
                             onToggle: () => setState(() => _showNew = !_showNew),
                             validator: (val) {
                               if (val == null || val.isEmpty) return 'Yeni şifreyi girin';
@@ -355,6 +402,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             controller: _confirmPasswordController,
                             label: 'Yeni Şifre (Tekrar)',
                             isVisible: _showConfirm,
+                            isDark: isDark,
                             onToggle: () => setState(() => _showConfirm = !_showConfirm),
                             validator: (val) {
                               if (val != _newPasswordController.text) return 'Şifreler eşleşmiyor';
@@ -368,8 +416,8 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _changePassword,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.black,
-                                disabledBackgroundColor: Colors.black38,
+                                backgroundColor: AppColors.primary,
+                                disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
@@ -381,7 +429,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                       height: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        color: Colors.white,
+                                        color: Colors.black,
                                       ),
                                     )
                                   : const Text(
@@ -389,7 +437,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w900,
-                                        color: Colors.white,
+                                        color: Colors.black,
                                         letterSpacing: 0.8,
                                       ),
                                     ),
@@ -402,12 +450,12 @@ class _SecurityScreenState extends State<SecurityScreen> {
                     const SizedBox(height: 28),
 
                     // Reset via email
-                    const Text(
+                    Text(
                       'ŞİFREMİ UNUTTUM',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF9CA3AF),
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -417,9 +465,21 @@ class _SecurityScreenState extends State<SecurityScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                            width: 1.5,
+                          ),
+                          boxShadow: isDark
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.02),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  )
+                                ],
                         ),
                         child: Row(
                           children: [
@@ -427,7 +487,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEF3C7),
+                                color: const Color(0xFFFEF3C7).withOpacity(isDark ? 0.15 : 0.4),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(
@@ -437,7 +497,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                               ),
                             ),
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -446,16 +506,16 @@ class _SecurityScreenState extends State<SecurityScreen> {
                                     style: TextStyle(
                                       fontSize: 14.5,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textDark,
+                                      color: isDark ? Colors.white : Colors.black,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'E-postanıza sıfırlama bağlantısı gönderilir',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.textSecondary,
+                                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                     ),
                                   ),
                                 ],
@@ -464,7 +524,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
                             Icon(
                               UIcons.regularRounded.angle_right,
                               size: 14,
-                              color: AppColors.textSecondary,
+                              color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                             ),
                           ],
                         ),

@@ -14,6 +14,7 @@ type User struct {
 
 	FullName string `json:"full_name"`
 	Email    string `gorm:"uniqueIndex;not null" json:"email"`
+	Address  string `json:"address"`
 
 	// Onboarding Info
 	Gender           string  `json:"gender"`

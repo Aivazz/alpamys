@@ -5,13 +5,11 @@ import '../../profile/providers/profile_provider.dart';
 
 class HomeHeader extends StatelessWidget {
   final VoidCallback onMenuTap;
-  final VoidCallback onNotificationsTap;
   final ValueChanged<String>? onSearchChanged;
 
   const HomeHeader({
     super.key,
     required this.onMenuTap,
-    required this.onNotificationsTap,
     this.onSearchChanged,
   });
 
@@ -46,19 +44,13 @@ class HomeHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Bar (Menu & Notification)
+          // Top Bar (Menu only)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               IconButton(
                 icon: const UIconMenu(color: Colors.white, size: 24),
                 onPressed: onMenuTap,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                icon: const UIconNotification(color: Colors.white, size: 24),
-                onPressed: onNotificationsTap,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),

@@ -2,10 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../common_widgets/feedback/custom_feedback.dart';
+import '../../profile/services/gym_visit_service.dart';
 
 class QrScannerScreen extends StatefulWidget {
   final String title;
-  const QrScannerScreen({super.key, required this.title});
+  final String? gymId;
+  final String? gymName;
+  final String? gymImage;
+  const QrScannerScreen({
+    super.key,
+    required this.title,
+    this.gymId,
+    this.gymName,
+    this.gymImage,
+  });
 
   @override
   State<QrScannerScreen> createState() => _QrScannerScreenState();
@@ -46,8 +56,17 @@ class _QrScannerScreenState extends State<QrScannerScreen> with SingleTickerProv
     });
 
     _controller.stop();
-    
-    // Play success feedback with decoded value
+
+    // Record gym visit if gym info is provided
+    if (widget.gymId != null && widget.gymName != null) {
+      GymVisitService().recordVisit(
+        gymId: widget.gymId!,
+        gymName: widget.gymName!,
+        gymImage: widget.gymImage ?? '',
+      );
+    }
+
+    // Play success feedback
     CustomFeedback.show(
       context,
       'Giriş Başarılı!\nOkunan QR: $code',

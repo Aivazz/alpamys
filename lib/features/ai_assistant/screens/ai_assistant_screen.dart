@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../profile/providers/profile_provider.dart';
 
 class AIAssistantScreen extends StatefulWidget {
@@ -85,8 +86,10 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -102,12 +105,12 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                       child: Container(
                         width: 36,
                         height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF3F4F6),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.arrow_back_ios_new, size: 14, color: Colors.black),
+                        child: Center(
+                          child: Icon(Icons.arrow_back_ios_new, size: 14, color: isDark ? Colors.white : Colors.black),
                         ),
                       ),
                     ),
@@ -115,12 +118,12 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                   ] else ...[
                     const SizedBox(width: 12),
                   ],
-                  const Text(
+                  Text(
                     'ALPAMYS AI',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black,
+                      color: isDark ? Colors.white : Colors.black,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -141,11 +144,11 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
+                        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.refresh_rounded, color: Colors.black, size: 20),
+                      child: Center(
+                        child: Icon(Icons.refresh_rounded, color: isDark ? Colors.white : Colors.black, size: 20),
                       ),
                     ),
                   ),
@@ -153,7 +156,11 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
               ),
             ),
 
-            const Divider(color: Color(0xFFF3F4F6), thickness: 1.5, height: 16),
+            Divider(
+              color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+              thickness: 1.5,
+              height: 16,
+            ),
 
             // Message list
             Expanded(
@@ -174,12 +181,12 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                         if (!isUser) ...[
                           Container(
                             margin: const EdgeInsets.only(top: 4),
-                            child: const CircleAvatar(
+                            child: CircleAvatar(
                               radius: 15,
-                              backgroundColor: Color(0xFFE8F5E9),
-                              child: Icon(
+                              backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                              child: const Icon(
                                 Icons.auto_awesome,
-                                color: Color(0xFF10B981),
+                                color: AppColors.primary,
                                 size: 14,
                               ),
                             ),
@@ -189,8 +196,25 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                           decoration: BoxDecoration(
-                            color: isUser ? const Color(0xFF10B981) : const Color(0xFFF3F4F6),
+                            color: isUser 
+                                ? AppColors.primary 
+                                : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
                             borderRadius: BorderRadius.circular(18),
+                            border: isUser 
+                                ? null 
+                                : Border.all(
+                                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                                    width: 1,
+                                  ),
+                            boxShadow: isDark || isUser
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    )
+                                  ],
                           ),
                           constraints: BoxConstraints(
                             maxWidth: MediaQuery.of(context).size.width * 0.72,
@@ -198,9 +222,9 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                           child: Text(
                             message['text'] as String,
                             style: TextStyle(
-                              color: isUser ? Colors.white : Colors.black,
+                              color: isUser ? Colors.black : (isDark ? Colors.white : Colors.black),
                               fontSize: 14.0,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: isUser ? FontWeight.w700 : FontWeight.w500,
                               height: 1.3,
                             ),
                           ),
@@ -218,16 +242,19 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                 margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
+                      color: Colors.black.withOpacity(isDark ? 0.1 : 0.04),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
-                  border: Border.all(color: const Color(0xFFE5E7EB), width: 1.5),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -235,14 +262,14 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                     Container(
                       width: 36,
                       height: 36,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE8F5E9),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(isDark ? 0.12 : 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
                         child: Icon(
                           Icons.auto_awesome,
-                          color: Color(0xFF10B981),
+                          color: AppColors.primary,
                           size: 18,
                         ),
                       ),
@@ -255,13 +282,13 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                         child: TextField(
                           controller: _controller,
                           onSubmitted: (_) => _sendMessage(),
-                          style: const TextStyle(fontSize: 14.0, color: Colors.black),
-                          decoration: const InputDecoration(
+                          style: TextStyle(fontSize: 14.0, color: isDark ? Colors.white : Colors.black),
+                          decoration: InputDecoration(
                             hintText: 'AlpamysAI\'ye bir şeyler sorun...',
-                            hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14.0),
+                            hintStyle: TextStyle(color: isDark ? Colors.grey : Colors.grey.shade600, fontSize: 14.0),
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 8.0),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
                           ),
                         ),
                       ),
@@ -273,13 +300,13 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
                         width: 36,
                         height: 36,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
                           child: Icon(
                             Icons.send_rounded,
-                            color: Colors.white,
+                            color: Colors.black,
                             size: 16,
                           ),
                         ),

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:uicons/uicons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/services/api_service.dart';
 import '../services/cart_service.dart';
 import '../../../common_widgets/feedback/custom_feedback.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../payment/widgets/payment_sheet.dart';
+import '../../profile/services/order_history_service.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -452,20 +457,35 @@ class _CartScreenState extends State<CartScreen> {
       child: SafeArea(
         top: false,
         child: GestureDetector(
-          onTap: () {
+          onTap: () async {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final hasAddress = await _checkAndPromptAddress(context, isDark);
+            if (!hasAddress) return;
+
+            if (!mounted) return;
             showPaymentSheet(
               context: context,
               title: 'Ödeme Yap',
               subtitle: 'Toplam tutar: $total TL — Güvenli ödeme.',
               confirmLabel: 'Siparişi Tamamla  ($total TL)',
               primaryColor: const Color(0xFFA3CB24),
-              onConfirm: () {
+              onConfirm: () async {
+                // Save order history before clearing cart
+                final cartItems = _cartService.items.map((item) => {
+                  'name': item.product['name'],
+                  'image': item.product['image'],
+                  'price': item.product['price'],
+                  'size': item.size,
+                  'quantity': item.quantity,
+                }).toList();
+                await OrderHistoryService().addOrder(cartItems);
+                _cartService.clear();
+                if (!context.mounted) return;
                 CustomFeedback.show(
                   context,
                   'Siparişiniz başarıyla oluşturuldu! Alpamys\'i seçtiğiniz için teşekkürler.',
                   type: FeedbackType.success,
                 );
-                _cartService.clear();
               },
             );
           },
@@ -501,6 +521,325 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getUserPrefix() {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          return 'user_${user.uid}_';
+        }
+      }
+    } catch (_) {}
+    return 'user_anonymous_';
+  }
+
+  Future<bool> _checkAndPromptAddress(BuildContext context, bool isDark) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = _getUserPrefix();
+      final String key = '${prefix}user_addresses';
+      final List<String> currentAddresses = prefs.getStringList(key) ?? [];
+
+      if (currentAddresses.isNotEmpty) {
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error checking local address: $e');
+    }
+
+    // No address found, show bottom sheet slider to add one
+    if (!context.mounted) return false;
+    final bool? result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _AddressInputSlider(isDark: isDark);
+      },
+    );
+
+    return result ?? false;
+  }
+}
+
+class _AddressInputSlider extends StatefulWidget {
+  final bool isDark;
+  const _AddressInputSlider({required this.isDark});
+
+  @override
+  State<_AddressInputSlider> createState() => _AddressInputSliderState();
+}
+
+class _AddressInputSliderState extends State<_AddressInputSlider> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _postalCodeController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _cityController.dispose();
+    _addressController.dispose();
+    _postalCodeController.dispose();
+    super.dispose();
+  }
+
+  String _getUserPrefix() {
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          return 'user_${user.uid}_';
+        }
+      }
+    } catch (_) {}
+    return 'user_anonymous_';
+  }
+
+  Future<void> _saveAddress() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final title = _titleController.text.trim();
+      final city = _cityController.text.trim();
+      final addressText = _addressController.text.trim();
+      final postal = _postalCodeController.text.trim();
+      
+      final String fullFormattedAddress = '$title||$city||$addressText||$postal';
+
+      // 1. Save to SharedPreferences for local lists
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = _getUserPrefix();
+      final String key = '${prefix}user_addresses';
+      final List<String> currentAddresses = prefs.getStringList(key) ?? [];
+      currentAddresses.add(fullFormattedAddress);
+      await prefs.setStringList(key, currentAddresses);
+
+      // 2. Save to Remote Database
+      await ApiService.updateAddress(fullFormattedAddress);
+
+      if (mounted) {
+        CustomFeedback.show(context, 'Adres başarıyla kaydedildi!', type: FeedbackType.success);
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomFeedback.show(context, 'Adres kaydedilemedi: $e', type: FeedbackType.warning);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    final isDark = widget.isDark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.grey : Colors.grey.shade600,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          validator: validator,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: isDark ? Colors.grey.shade600 : Colors.grey.shade400, fontSize: 14),
+            filled: true,
+            fillColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF1F5F9),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF131313) : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE5E7EB),
+          width: 1.5,
+        ),
+      ),
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'TESLİMAT ADRESİ EKLEYİN',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : Colors.black,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Siparişi tamamlamak için teslimat adresinizi girmelisiniz.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildInputField(
+                  controller: _titleController,
+                  label: 'Adres Başlığı',
+                  hint: 'Örn: Ev, İş, Okul',
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Lütfen bir başlık girin';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _cityController,
+                  label: 'Şehir / İlçe',
+                  hint: 'Örn: Almatı, Medeu',
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Lütfen şehir/ilçe girin';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _addressController,
+                  label: 'Tam Adres',
+                  hint: 'Sokak, mahalle, bina ve daire numarası',
+                  maxLines: 3,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Lütfen tam adresinizi girin';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildInputField(
+                  controller: _postalCodeController,
+                  label: 'Posta Kodu (İsteğe Bağlı)',
+                  hint: 'Örn: 050000',
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveAddress,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.primary.withOpacity(0.4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black,
+                            ),
+                          )
+                        : const Text(
+                            'ADRESİ KAYDET VE DEVAM ET',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

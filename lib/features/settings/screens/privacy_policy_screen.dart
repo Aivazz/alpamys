@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
-  Widget _buildSection(String title, String content) {
+  Widget _buildSection(String title, String content, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -24,10 +24,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textDark,
+                  color: isDark ? Colors.white : Colors.black,
                   letterSpacing: 0.3,
                 ),
               ),
@@ -37,11 +37,11 @@ class PrivacyPolicyScreen extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           content,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             height: 1.65,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF4B5563),
+            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
           ),
         ),
         const SizedBox(height: 28),
@@ -52,9 +52,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F9F9),
+      backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
       body: Column(
         children: [
           // Header (Premium Dark Top Bar)
@@ -63,12 +64,21 @@ class PrivacyPolicyScreen extends StatelessWidget {
               Container(
                 width: double.infinity,
                 height: topPadding + 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF131313),
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(32),
                     bottomRight: Radius.circular(32),
                   ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                 ),
               ),
               Padding(
@@ -87,26 +97,26 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Icon(
                                 UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
-                      const Center(
+                      Center(
                         child: Text(
                           'GİZLİLİK POLİTİKASI',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : Colors.black,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -128,16 +138,21 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFF3F4F6), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
+                      boxShadow: isDark
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +162,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEF3C7),
+                                color: const Color(0xFFFEF3C7).withOpacity(isDark ? 0.15 : 0.4),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
@@ -157,24 +172,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Text(
+                            Text(
                               'Yasal Bilgilendirme',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 14),
-                        const Text(
+                        Text(
                           'İşbu Gizlilik Politikası, Alpamys AI platformu (bundan böyle "Platform" olarak anılacaktır) tarafından toplanan kişisel verilerin korunması, işlenmesi ve imha edilmesi süreçlerini KVKK (Kişisel Verilerin Korunması Kanunu) ve yürürlükteki uluslararası hukuk normlarına tam uyum içerisinde düzenlemek amacıyla akdedilmiştir.',
                           style: TextStyle(
                             fontSize: 13,
                             height: 1.6,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF4B5563),
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                           ),
                         ),
                       ],
@@ -185,29 +200,34 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   _buildSection(
                     '1. Veri Sorumlusunun Kimliği',
                     'Alpamys AI, veri sorumlusu sıfatıyla hareket ederek, platform üyelerinin kişisel verilerini yasal sınırlar ve hukuki sınırlar dairesinde işlemektedir. Verileriniz, son derece güvenlikli dijital altyapılarda şifrelenmiş olarak saklanmakta ve kesinlikle üçüncü taraflara ticari bir meta olarak aktarılmamaktadır.',
+                    isDark,
                   ),
                   _buildSection(
                     '2. Toplanan ve İşlenen Kişisel Veriler',
                     'Platformu kullanımınız kapsamında; Ad Soyad, E-posta adresi, Telefon numarası, Yaş, Boy, Kilo ve Antrenman verileri gibi doğrudan üyeliğin tesisi ve kişiselleştirilmiş hizmet sunulması amacıyla elzem olan veriler yasal rızanız doğrultusunda işlenmektedir.',
+                    isDark,
                   ),
                   _buildSection(
                     '3. Veri İşleme Amaçları ve Hukuki Sebepler',
                     'Kişisel verileriniz, tarafınıza sunulan yapay zeka destekli antrenman ve sağlıklı beslenme rehberliği hizmetinin tam teşekküllü olarak ifa edilebilmesi, kullanıcı deneyiminin optimize edilmesi ve yasal mevzuattan kaynaklanan bilgi saklama yükümlülüklerimizin yerine getirilmesi amacıyla işlenmektedir.',
+                    isDark,
                   ),
                   _buildSection(
                     '4. Veri Güvenliği ve Saklama Süresi',
                     'Alpamys AI, kişisel verilerinizin yetkisiz kişilerce erişilmesini, kaybolmasını veya zarar görmesini önlemek amacıyla endüstri standardı şifreleme yöntemlerini ve güvenlik duvarlarını kullanmaktadır. Verileriniz, yasal üyelik süreniz boyunca ve yasal saklama süreleri elverdiği ölçüde muhafaza edilir.',
+                    isDark,
                   ),
                   _buildSection(
                     '5. İlgili Kişi Olarak Haklarınız',
                     'Kanunun ilgili maddeleri uyarınca dilediğiniz zaman; kişisel verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, eksik veya yanlış işlenmişse düzeltilmesini isteme ve sistemden verilerinizin tamamen silinmesini (Unutulma Hakkı) talep etme hakkına sahipsiniz. Başvurularınızı yasal kanallar aracılığıyla tarafımıza iletebilirsiniz.',
+                    isDark,
                   ),
 
                   // Legal signature placeholder
                   const SizedBox(height: 12),
-                  const Divider(color: Color(0xFFE5E7EB)),
+                  Divider(color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0)),
                   const SizedBox(height: 20),
-                  const Center(
+                  Center(
                     child: Column(
                       children: [
                         Text(
@@ -215,16 +235,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: isDark ? Colors.white : Colors.black,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Yürürlük Tarihi: 01.06.2026',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF9CA3AF),
+                            color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
                           ),
                         ),
                       ],

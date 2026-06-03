@@ -14,11 +14,11 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  final int _totalSteps = 7;
+  final int _totalSteps = 5;
 
   // Onboarding Answers State
   String _selectedGender = 'Erkek'; // Erkek / Kadın
-  String _selectedActivity = 'Running'; // Running, Walking, Meal plan, Cycling, Yoga, Health
+  final String _selectedActivity = 'Running'; // Running, Walking, Meal plan, Cycling, Yoga, Health
   int _selectedAge = 25;
   
   bool _isKg = true; // true = KG, false = LBS
@@ -27,42 +27,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _isCm = true; // true = CM, false = FEET
   String _heightInput = '175';
 
-  String _selectedLevel = 'Beginner'; // Beginner, Intermediate, Advanced
+  final String _selectedLevel = 'Beginner'; // Beginner, Intermediate, Advanced
   String _selectedGoal = 'Improve fitness'; // Weight loss, Gain muscle, Improve fitness
 
-  // Activity List data
-  final List<Map<String, String>> _activities = [
-    {
-      'name': 'Running',
-      'label': 'Koşu',
-      'image': 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=200&auto=format&fit=crop&q=60',
-    },
-    {
-      'name': 'Walking',
-      'label': 'Yürüyüş',
-      'image': 'https://images.unsplash.com/photo-1502224562085-639556652f33?w=200&auto=format&fit=crop&q=60',
-    },
-    {
-      'name': 'Meal plan',
-      'label': 'Diyet',
-      'image': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=200&auto=format&fit=crop&q=60',
-    },
-    {
-      'name': 'Cycling',
-      'label': 'Bisiklet',
-      'image': 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=200&auto=format&fit=crop&q=60',
-    },
-    {
-      'name': 'Yoga',
-      'label': 'Yoga',
-      'image': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=200&auto=format&fit=crop&q=60',
-    },
-    {
-      'name': 'Health',
-      'label': 'Sağlık',
-      'image': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=200&auto=format&fit=crop&q=60',
-    },
-  ];
+
 
   void _nextPage() async {
     if (_currentStep < _totalSteps - 1) {
@@ -142,13 +110,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _onKeyboardInput(String value) {
     setState(() {
-      if (_currentStep == 3) {
+      if (_currentStep == 2) {
         // Weight
         if (value == '.' && _weightInput.contains('.')) return;
         if (_weightInput.length < 5) {
           _weightInput = _weightInput == '0' && value != '.' ? value : _weightInput + value;
         }
-      } else if (_currentStep == 4) {
+      } else if (_currentStep == 3) {
         // Height
         if (value == '.' && _heightInput.contains('.')) return;
         if (_heightInput.length < 5) {
@@ -160,12 +128,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _onKeyboardDelete() {
     setState(() {
-      if (_currentStep == 3) {
+      if (_currentStep == 2) {
         if (_weightInput.isNotEmpty) {
           _weightInput = _weightInput.substring(0, _weightInput.length - 1);
           if (_weightInput.isEmpty) _weightInput = '0';
         }
-      } else if (_currentStep == 4) {
+      } else if (_currentStep == 3) {
         if (_heightInput.isNotEmpty) {
           _heightInput = _heightInput.substring(0, _heightInput.length - 1);
           if (_heightInput.isEmpty) _heightInput = '0';
@@ -242,11 +210,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 children: [
                   _buildGenderStep(),
-                  _buildFavoriteStep(),
                   _buildAgeStep(),
                   _buildWeightStep(),
                   _buildHeightStep(),
-                  _buildLevelStep(),
                   _buildGoalStep(),
                 ],
               ),
@@ -262,7 +228,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // BOTTOM AREA: Displays Custom Keyboard for weight/height steps, otherwise show "NEXT STEPS"
   Widget _buildBottomArea() {
-    bool showKeyboard = _currentStep == 3 || _currentStep == 4;
+    bool showKeyboard = _currentStep == 2 || _currentStep == 3;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -452,65 +418,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 2: Favorite Activity
-  Widget _buildFavoriteStep() {
-    return _buildStepLayout(
-      title: 'FAVORİ AKTİVİTENİZ?',
-      subtitle: 'En sevdiğiniz hareket planlarını öne çıkarmak için birini seçin.',
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.0,
-        ),
-        itemCount: _activities.length,
-        itemBuilder: (context, index) {
-          final act = _activities[index];
-          bool isSelected = _selectedActivity == act['name'];
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedActivity = act['name']!;
-              });
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  width: 86,
-                  height: 86,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.15),
-                      width: 2.5,
-                    ),
-                    image: DecorationImage(
-                      image: NetworkImage(act['image']!),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  act['label']!,
-                  style: TextStyle(
-                    color: isSelected ? AppColors.primary : Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
+
 
   // STEP 3: Age Selector (Vertical Wheel)
   Widget _buildAgeStep() {
@@ -660,79 +568,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 7: Fitness Level Selection
-  Widget _buildLevelStep() {
-    return _buildStepLayout(
-      title: 'SPOR SEVİYENİZ?',
-      subtitle: 'Antrenman yoğunluğunu size en uygun düzeyde tutmak için önemlidir.',
-      child: Column(
-        children: [
-          _buildOptionCard(
-            value: 'Beginner',
-            label: 'Yeni Başlayan',
-            desc: 'Egzersiz yapmaya yeni başladım veya uzun ara verdim.',
-          ),
-          const SizedBox(height: 14),
-          _buildOptionCard(
-            value: 'Intermediate',
-            label: 'Orta Seviye',
-            desc: 'Düzenli egzersiz yapıyorum ve kondisyonum yerinde.',
-          ),
-          const SizedBox(height: 14),
-          _buildOptionCard(
-            value: 'Advanced',
-            label: 'İleri Seviye',
-            desc: 'Yoğun antrenmanlara ve ağır egzersizlere alışığım.',
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildOptionCard({required String value, required String label, required String desc}) {
-    bool isSelected = _selectedLevel == value;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedLevel = value;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.white.withOpacity(0.08),
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              desc,
-              style: TextStyle(
-                color: isSelected ? Colors.white.withOpacity(0.7) : Colors.white38,
-                fontSize: 12.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // STEP 8: Goal Selection
   Widget _buildGoalStep() {

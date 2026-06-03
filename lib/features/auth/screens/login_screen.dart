@@ -360,11 +360,7 @@ class _ForgotPasswordButton extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
-        onPressed: () => CustomFeedback.show(
-          context,
-          'Şifre sıfırlama bağlantısı gönderildi!',
-          type: FeedbackType.info,
-        ),
+        onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
         child: const Text(
           'Şifremi Unuttum?',
           style: TextStyle(
@@ -471,7 +467,9 @@ class _GoogleSignInButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
+        onPressed: () {
+          context.read<AuthBloc>().add(const GoogleSignInSubmittedEvent());
+        },
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

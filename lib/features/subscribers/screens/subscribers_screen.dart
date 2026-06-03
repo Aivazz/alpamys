@@ -86,12 +86,10 @@ class _SubscribersScreenState extends State<SubscribersScreen> {
   ];
 
   // Returns gyms: real data from Overpass/Yandex API if available, else a generic generated list.
-  // No city-specific hardcoding — works universally for any city in the world.
   List<Map<String, dynamic>> get _gyms {
     if (_realGymsFetched != null) {
       return _realGymsFetched!;
     }
-    // Fallback: generate a generic list based on current GPS coordinates
     final location = ProfileProvider().profileData['location']?.toString() ?? '';
     final String cityName = location.replaceAll(' (GPS)', '').trim();
     final double lat = (ProfileProvider().profileData['latitude'] as num?)?.toDouble() ?? 43.2389;
@@ -256,9 +254,7 @@ class _SubscribersScreenState extends State<SubscribersScreen> {
   }
 
   Future<void> _fetchGymsFromNominatim(String cityName, double lat, double lon, {String? query}) async {
-    // Use Overpass API to get real gym POIs — same data source as Yandex/Google Maps pins.
-    // Always fetch all gyms within radius; if a search query is provided, filter client-side.
-    final double radiusMeters = 25000; // 25 km radius
+    final double radiusMeters = 25000;
 
     final String overpassQuery = '''
 [out:json][timeout:25];
@@ -271,7 +267,6 @@ class _SubscribersScreenState extends State<SubscribersScreen> {
 out center tags;
 ''';
 
-    // Try Overpass mirrors: first via GET, then via POST
     final List<Map<String, dynamic>> overpassEndpoints = [
       {'url': 'https://overpass.osm.ch/api/interpreter', 'method': 'get'},
       {'url': 'https://overpass-api.de/api/interpreter',  'method': 'post'},
@@ -312,26 +307,22 @@ out center tags;
         if (response.statusCode == 200) {
           final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
           final List elements = data['elements'] ?? [];
-          debugPrint('Overpass $epUrl returned ${elements.length} elements');
 
           if (elements.isNotEmpty) {
-            // Client-side name filter if user typed a search query
             final String queryLower = (query ?? '').trim().toLowerCase();
 
             int index = 0;
             for (var element in elements) {
               final tags = element['tags'] ?? {};
               final String name = tags['name'] ?? tags['name:en'] ?? tags['name:tr'] ?? '';
-              if (name.isEmpty) continue; // skip unnamed venues
+              if (name.isEmpty) continue;
 
-              // Apply client-side search filter
               if (queryLower.isNotEmpty && !name.toLowerCase().contains(queryLower)) continue;
 
               final double gymLat = (element['lat'] ?? element['center']?['lat'] as num? ?? lat).toDouble();
               final double gymLon = (element['lon'] ?? element['center']?['lon'] as num? ?? lon).toDouble();
               final double dist = _calculateDistance(lat, lon, gymLat, gymLon);
 
-              // Build address from OSM tags
               final List<String> addrParts = [
                 if (tags['addr:street'] != null) '${tags['addr:street']}${tags['addr:housenumber'] != null ? ' ${tags['addr:housenumber']}' : ''}',
                 if (tags['addr:city'] != null) tags['addr:city'],
@@ -377,10 +368,8 @@ out center tags;
               index++;
             }
             success = true;
-            break; // got results, stop trying mirrors
+            break;
           }
-        } else {
-          debugPrint('Overpass $epUrl returned status ${response.statusCode}');
         }
       } catch (e) {
         debugPrint('Overpass endpoint $epUrl failed: $e');
@@ -391,7 +380,6 @@ out center tags;
       debugPrint('All Overpass endpoints failed or returned no results. Using generated gyms.');
     }
 
-    // If we got fewer than 3 real venues, supplement with the static list for this city
     if (parsedList.length < 3) {
       final List<Map<String, dynamic>> staticGyms = _gyms;
       for (var g in staticGyms) {
@@ -415,8 +403,6 @@ out center tags;
     }
   }
 
-  /// Returns a plausible approximate monthly membership price (890–1990 TL)
-  /// varied deterministically by the OSM element id so it's stable across rebuilds.
   String _approxPrice(int seed) {
     const tiers = [890, 990, 1090, 1190, 1290, 1390, 1490, 1590, 1690, 1790, 1890, 1990];
     return tiers[seed.abs() % tiers.length].toString().replaceAllMapped(
@@ -530,9 +516,10 @@ out center tags;
     return list;
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ListenableBuilder(
       listenable: ProfileProvider(),
       builder: (context, child) {
@@ -559,12 +546,12 @@ out center tags;
         }
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF6F8FA),
+          backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
           extendBody: true,
           body: RefreshIndicator(
             onRefresh: _onRefresh,
             color: AppColors.primary,
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
@@ -581,25 +568,33 @@ out center tags;
     );
   }
 
-  // --- HEADER WIDGET ---
   Widget _buildHeader(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        // Dark Top Background Block (Compact header style)
         Container(
           width: double.infinity,
           height: topPadding + 68,
-          decoration: const BoxDecoration(
-            color: Color(0xFF131313),
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(32),
               bottomRight: Radius.circular(32),
             ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
           ),
         ),
-        // Header Content
         Padding(
           padding: EdgeInsets.only(
             left: 20.0,
@@ -609,7 +604,6 @@ out center tags;
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top navigation row
               SizedBox(
                 height: 40,
                 child: Stack(
@@ -624,21 +618,20 @@ out center tags;
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: Icon(
                                 UIcons.regularRounded.angle_left,
                                 size: 16,
-                                color: Colors.white,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
                         ),
                       ),
                     
-                    // Center title badge
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -655,10 +648,10 @@ out center tags;
                             Text(
                               'SPOR SALONLARI',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
-                                letterSpacing: 1.0,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.primary,
+                                  letterSpacing: 1.0,
                               ),
                             ),
                           ],
@@ -774,11 +767,11 @@ out center tags;
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.qr_code_scanner_rounded, color: Colors.black, size: 18),
+                        const Icon(Icons.qr_code_scanner_rounded, color: Colors.black, size: 18),
                         const SizedBox(width: 8),
-                        Text(
+                        const Text(
                           'Giriş Yap (QR Kod)',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.black,
                             fontSize: 13,
                             fontWeight: FontWeight.w900,
@@ -795,15 +788,17 @@ out center tags;
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 20.0, top: 20.0, bottom: 12.0),
+        Padding(
+          padding: const EdgeInsets.only(left: 20.0, top: 20.0, bottom: 12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'ALPAMYS PASS',
                 style: TextStyle(
                   fontSize: 11,
@@ -812,13 +807,13 @@ out center tags;
                   letterSpacing: 1.5,
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 'Tek Üyelikle Sınırsız Spor Keyfi',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF0D1117),
+                  color: isDark ? Colors.white : Colors.black,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -1007,7 +1002,7 @@ out center tags;
               width: isActive ? 16 : 6,
               height: 6,
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : Colors.grey.shade300,
+                color: isActive ? AppColors.primary : Colors.grey.shade600,
                 borderRadius: BorderRadius.circular(3),
               ),
             );
@@ -1017,17 +1012,23 @@ out center tags;
     );
   }
 
-  void _openRealQrScanner(BuildContext context, String title) {
+  void _openRealQrScanner(BuildContext context, String title, {Map<String, dynamic>? gym}) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => QrScannerScreen(title: title),
+        builder: (context) => QrScannerScreen(
+          title: title,
+          gymId: gym?['id'] as String?,
+          gymName: gym?['name'] as String?,
+          gymImage: gym?['image'] as String?,
+        ),
       ),
     );
   }
 
-  // --- MAIN BODY CONTENT (ALWAYS SHOWS SPORTS DIRECTORY) ---
   Widget _buildMainBodyContent() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final filteredGyms = _gyms.where((g) {
       final tags = List<String>.from(g['tags'] as List);
       final matchesCategory = _selectedCategory == 'Hepsi' || tags.contains(_selectedCategory);
@@ -1051,20 +1052,27 @@ out center tags;
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withOpacity(isDark ? 0.1 : 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     )
                   ],
-                  border: Border.all(color: const Color(0xFFEAEFF3), width: 1),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+                    Icon(
+                      Icons.search_rounded,
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextField(
@@ -1080,10 +1088,17 @@ out center tags;
                             _fetchGymsFromYandex(lat, lon, query: val);
                           });
                         },
-                        decoration: const InputDecoration(
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
+                          fontSize: 14,
+                        ),
+                        decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Salon veya bölge ara...',
-                          hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey : Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -1110,48 +1125,23 @@ out center tags;
               ),
               const SizedBox(height: 22),
 
+              // Gym Cards Grid / List / Spinner
               if (_isFetchingRealGyms)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                    ),
-                    child: const Row(
-                      children: [
-                        SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Yakınınızdaki gerçek spor salonları aranıyor...',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60.0),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   ),
-                ),
-
-              // Gym Cards Grid / List
-              if (filteredGyms.isEmpty)
+                )
+              else if (filteredGyms.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40.0),
                     child: Column(
                       children: [
-                        Icon(Icons.search_off_rounded, color: Colors.grey.shade300, size: 48),
+                        Icon(Icons.search_off_rounded, color: Colors.grey.shade600, size: 48),
                         const SizedBox(height: 12),
                         const Text(
                           'Aradığınız kriterlere uygun salon bulunamadı.',
@@ -1195,10 +1185,10 @@ out center tags;
     );
   }
 
-  // --- CHIP & GYM CARD BUILDERS ---
-
   Widget _buildCategoryChip(String category) {
     final isSelected = _selectedCategory == category;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -1210,27 +1200,41 @@ out center tags;
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF131313) : Colors.white,
+          color: isSelected 
+              ? AppColors.primary 
+              : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? Colors.transparent : const Color(0xFFE5E7EB),
-            width: 1,
+            color: isSelected 
+                ? Colors.transparent 
+                : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0)),
+            width: 1.5,
           ),
           boxShadow: isSelected 
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: AppColors.primary.withOpacity(0.15),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
                 ]
-              : null,
+              : (isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ]),
         ),
         child: Center(
           child: Text(
             category,
             style: TextStyle(
-              color: isSelected ? AppColors.primary : Colors.grey.shade500,
+              color: isSelected 
+                  ? Colors.black 
+                  : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -1241,15 +1245,20 @@ out center tags;
   }
 
   Widget _buildGymCard(Map<String, dynamic> gym) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEAEFF3), width: 1.2),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -1274,7 +1283,7 @@ out center tags;
                     return Container(
                       height: 180,
                       width: double.infinity,
-                      color: Colors.grey.shade900,
+                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
                       child: const Center(
                         child: Icon(
                           Icons.fitness_center_rounded,
@@ -1285,7 +1294,6 @@ out center tags;
                     );
                   },
                 ),
-                // Premium Top overlay gradient
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -1372,10 +1380,10 @@ out center tags;
                     Expanded(
                       child: Text(
                         gym['name'] as String,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 17,
-                          color: Colors.black,
+                          color: isDark ? Colors.white : Colors.black,
                           letterSpacing: -0.3,
                         ),
                       ),
@@ -1383,13 +1391,13 @@ out center tags;
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         gym['price'] as String,
                         style: const TextStyle(
-                          color: Colors.black87,
+                          color: AppColors.primary,
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                         ),
@@ -1406,20 +1414,24 @@ out center tags;
                         gym['address'] as String,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade500,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, color: Colors.grey.shade400, size: 14),
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                          size: 14,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           gym['distance'] as String,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade500,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1435,8 +1447,9 @@ out center tags;
     );
   }
 
-  // --- SHEET 1: SELECT SUBSCRIPTION PACKAGES ---
   void _showSubscriptionPackagesSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1445,9 +1458,9 @@ out center tags;
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
@@ -1462,16 +1475,16 @@ out center tags;
                       width: 48,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Paket Seçimi Yapın',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: isDark ? Colors.white : Colors.black,
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
@@ -1480,11 +1493,13 @@ out center tags;
                   const SizedBox(height: 6),
                   Text(
                     'Tek üyelikle spor salonuna sınırsız erişim sağlayın.',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Plans List
                   Column(
                     children: _plans.asMap().entries.map((entry) {
                       final idx = entry.key;
@@ -1503,10 +1518,12 @@ out center tags;
                           margin: const EdgeInsets.only(bottom: 14),
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFFF9FBF9) : Colors.white,
+                            color: isSelected 
+                                ? (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFF1F5F9)) 
+                                : (isDark ? const Color(0xFF1E1E1E) : Colors.white),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : const Color(0xFFEAEFF3),
+                              color: isSelected ? AppColors.primary : (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0)),
                               width: isSelected ? 2 : 1.2,
                             ),
                             boxShadow: isSelected 
@@ -1527,7 +1544,7 @@ out center tags;
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                                    color: isSelected ? AppColors.primary : (isDark ? Colors.grey.shade600 : Colors.grey.shade400),
                                     width: isSelected ? 6.5 : 1.2,
                                   ),
                                 ),
@@ -1541,10 +1558,10 @@ out center tags;
                                       children: [
                                         Text(
                                           plan['title'] as String,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.w900, 
                                             fontSize: 15,
-                                            color: Colors.black87,
+                                            color: isDark ? Colors.white : Colors.black,
                                           ),
                                         ),
                                         if (plan['discount'].toString().isNotEmpty) ...[
@@ -1558,7 +1575,7 @@ out center tags;
                                             child: Text(
                                               plan['discount'] as String,
                                               style: const TextStyle(
-                                                color: Color(0xFF8BAE10),
+                                                color: AppColors.primary,
                                                 fontSize: 9,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -1570,7 +1587,10 @@ out center tags;
                                     const SizedBox(height: 3),
                                     Text(
                                       plan['subtitle'] as String,
-                                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                                      style: TextStyle(
+                                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1580,15 +1600,18 @@ out center tags;
                                 children: [
                                   Text(
                                     plan['price'] as String,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w900, 
                                       fontSize: 17,
-                                      color: Colors.black,
+                                      color: isDark ? Colors.white : Colors.black,
                                     ),
                                   ),
-                                  const Text(
+                                  Text(
                                     '/ Ay',
-                                    style: TextStyle(color: Colors.grey, fontSize: 10),
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey : Colors.grey.shade600,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1602,18 +1625,18 @@ out center tags;
 
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context); // Close plans sheet
-                      _showPaymentBottomSheet(context); // Open card screen
+                      Navigator.pop(context);
+                      _showPaymentBottomSheet(context);
                     },
                     child: Container(
                       width: double.infinity,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF131313),
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
+                            color: AppColors.primary.withOpacity(0.2),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           )
@@ -1623,7 +1646,7 @@ out center tags;
                         child: Text(
                           'Devam Et (${_plans[_selectedPlanIndex]['price']} / Ay)',
                           style: const TextStyle(
-                            color: AppColors.primary,
+                            color: Colors.black,
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
                           ),
@@ -1640,7 +1663,6 @@ out center tags;
     );
   }
 
-  // --- SHEET 2: PAYMENT BOTTOM SHEET (uses shared PaymentSheet with card persistence) ---
   void _showPaymentBottomSheet(BuildContext targetContext) {
     final selectedPlan = _plans[_selectedPlanIndex];
     showPaymentSheet(
@@ -1666,13 +1688,14 @@ out center tags;
 
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted || !targetContext.mounted) return;
-      Navigator.pop(targetContext); // Dismiss spinner
+      Navigator.pop(targetContext);
       
       showDialog(
         context: targetContext,
         builder: (context) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Dialog(
-            backgroundColor: const Color(0xFF131313),
+            backgroundColor: isDark ? const Color(0xFF131313) : Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             child: Padding(
               padding: const EdgeInsets.all(28.0),
@@ -1688,10 +1711,10 @@ out center tags;
                     child: const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 48),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Ödeme Başarılı!',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isDark ? Colors.white : Colors.black,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1701,7 +1724,7 @@ out center tags;
                     'Alpamys Pass üyeliğiniz aktif edildi. Keyifli antrenmanlar dileriz!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.7),
                       fontSize: 13,
                       height: 1.4,
                     ),
@@ -1709,7 +1732,7 @@ out center tags;
                   const SizedBox(height: 28),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context);
                       setState(() {
                         _hasActiveSubscription = true;
                       });
@@ -1742,7 +1765,6 @@ out center tags;
     });
   }
 
-  // --- POPUP: QR CHECK-IN SIMULATION OVERLAY ---
   void _showQRScannerSimulation(BuildContext targetContext) {
     Navigator.push(
       targetContext,
@@ -1751,11 +1773,8 @@ out center tags;
       ),
     );
   }
-
-
 }
 
-// --- GYM DETAIL SCREEN (PREMIUM SLIVER LAYOUT) ---
 class GymDetailScreen extends StatefulWidget {
   final Map<String, dynamic> gym;
   final bool hasActiveSubscription;
@@ -1846,59 +1865,72 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
         if (!mounted) return;
         showDialog(
           context: context,
-          builder: (ctx) => Dialog(
-            backgroundColor: const Color(0xFF131313),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            child: Padding(
-              padding: const EdgeInsets.all(28.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 48),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text('Ödeme Başarılı!',
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Text(
-                    '$gymName üyeliğiniz aktif edildi.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, height: 1.4),
-                  ),
-                  const SizedBox(height: 28),
-                  GestureDetector(
-                    onTap: () async {
-                      final gymId = widget.gym['id']?.toString() ?? '';
-                      final navigator = Navigator.of(ctx);
-                      await SubscriptionService().subscribeToGym(gymId);
-                      if (mounted) {
-                        navigator.pop();
-                        setState(() => _isSubscribed = true);
-                        widget.onSubscriptionSuccess();
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity, height: 48,
+          builder: (ctx) {
+            final isDark = Theme.of(ctx).brightness == Brightness.dark;
+            return Dialog(
+              backgroundColor: isDark ? const Color(0xFF131313) : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              child: Padding(
+                padding: const EdgeInsets.all(28.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(14),
+                        color: AppColors.primary.withOpacity(0.12),
+                        shape: BoxShape.circle,
                       ),
-                      child: const Center(
-                        child: Text('Harika 🎉',
-                            style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold)),
+                      child: const Icon(Icons.check_circle_rounded, color: AppColors.primary, size: 48),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Ödeme Başarılı!',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Text(
+                      '$gymName üyeliğiniz aktif edildi.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isDark ? Colors.white.withOpacity(0.6) : Colors.black.withOpacity(0.7),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    GestureDetector(
+                      onTap: () async {
+                        final gymId = widget.gym['id']?.toString() ?? '';
+                        final navigator = Navigator.of(ctx);
+                        await SubscriptionService().subscribeToGym(gymId);
+                        if (mounted) {
+                          navigator.pop();
+                          setState(() => _isSubscribed = true);
+                          widget.onSubscriptionSuccess();
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity, height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Center(
+                          child: Text('Harika 🎉',
+                              style: TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1914,13 +1946,14 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
       'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1593079831268-3381b0db4a77?w=500&auto=format&fit=crop&q=80',
     ];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
       extendBody: true,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Collapsible Image Header
           SliverAppBar(
             expandedHeight: 340,
             pinned: true,
@@ -1935,20 +1968,13 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     size: 16,
-                    color: Color(0xFF0D1117),
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
               ),
@@ -1972,7 +1998,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
-                            color: Colors.grey.shade900,
+                            color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
                             child: const Center(
                               child: Icon(
                                 Icons.fitness_center_rounded,
@@ -1985,7 +2011,6 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                       );
                     },
                   ),
-                  // Dark Top-Bottom Gradient overlay
                   IgnorePointer(
                     child: Container(
                       decoration: BoxDecoration(
@@ -2001,7 +2026,6 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                       ),
                     ),
                   ),
-                  // Carousel Photo Indicator Badge (bottom-right)
                   Positioned(
                     bottom: 32,
                     right: 20,
@@ -2029,14 +2053,13 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
             ),
           ),
 
-          // Main details wrapper
           SliverToBoxAdapter(
             child: Transform.translate(
               offset: const Offset(0, -12),
               child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF131313) : const Color(0xFFF6F8FA),
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(28),
                     topRight: Radius.circular(28),
                   ),
@@ -2045,7 +2068,6 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and Price Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2056,10 +2078,10 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                             children: [
                               Text(
                                 widget.gym['name'] as String,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0D1117),
+                                  color: isDark ? Colors.white : Colors.black,
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -2070,14 +2092,26 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
+                            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                              width: 1.5,
+                            ),
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
                           ),
                           child: Text(
                             widget.gym['price'] as String,
                             style: const TextStyle(
-                              color: Color(0xFF0D1117),
+                              color: AppColors.primary,
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
                             ),
@@ -2087,7 +2121,6 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Rating Block
                     Row(
                       children: [
                         Container(
@@ -2102,12 +2135,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                               const Icon(Icons.star_rounded, color: Color(0xFFFFD60A), size: 14),
                               const SizedBox(width: 4),
                               Text(
-                                '${widget.gym['rating']}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFFD60A),
-                                ),
+                                  '${widget.gym['rating']}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFFFD60A),
+                                  ),
                               ),
                             ],
                           ),
@@ -2117,7 +2150,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                           'Spor Salonu  •  ${widget.gym['reviews']} Değerlendirme',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.grey.shade600,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -2125,13 +2158,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Description Block (Açıklama)
-                    const Text(
+                    Text(
                       'AÇIKLAMA',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        color: Colors.black45,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -2141,7 +2173,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                           '${widget.gym['name']}, modern altyapısı ve hijyen standartlarıyla antrenmanlarınız için kusursuz bir ortam sunar.',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade700,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                         height: 1.5,
                       ),
                     ),
@@ -2161,13 +2193,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                    // Sub-ratings Block (Рейтинг занятия)
-                    const Text(
+                    Text(
                       'SALON DEĞERLENDİRMELERİ',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        color: Colors.black45,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -2178,9 +2209,21 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                         return Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
+                            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                              width: 1.5,
+                            ),
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
                           ),
                           child: Row(
                             children: [
@@ -2191,8 +2234,8 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                                   children: [
                                     Text(
                                       '${widget.gym['rating']}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF0D1117),
+                                      style: TextStyle(
+                                        color: isDark ? Colors.white : Colors.black,
                                         fontSize: 34,
                                         fontWeight: FontWeight.w900,
                                       ),
@@ -2210,7 +2253,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                                     Text(
                                       '${widget.gym['reviews']} Değerlendirme',
                                       style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -2221,7 +2264,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                               Container(
                                 height: 90,
                                 width: 1,
-                                color: const Color(0xFFE2E8F0),
+                                color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -2250,13 +2293,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     _buildUserRatingCard(),
                     const SizedBox(height: 28),
 
-                    // Map/Location Section (Расположение)
-                    const Text(
+                    Text(
                       'KONUM',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        color: Colors.black45,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -2265,7 +2307,10 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                       height: 180,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+                          width: 1.5,
+                        ),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(18),
@@ -2345,8 +2390,8 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                             children: [
                               Text(
                                 widget.gym['address'] as String,
-                                style: const TextStyle(
-                                  color: Color(0xFF0D1117),
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black,
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -2355,7 +2400,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                               Text(
                                 'Zemin kat (Giriş Katı)',
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                   fontSize: 13,
                                 ),
                               ),
@@ -2390,13 +2435,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     ),
                     const SizedBox(height: 28),
 
-                     // Amenities Section (Удобства)
-                    const Text(
+                    Text(
                       'OLANAKLAR',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        color: Colors.black45,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -2418,26 +2462,31 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                     ),
 
                   ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0),
+              width: 1.5,
             ),
-          ],
-          border: const Border(
-            top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
           ),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  )
+                ],
         ),
         child: Row(
           children: [
@@ -2445,12 +2494,12 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'AYLIK ÜYELİK',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black45,
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -2460,7 +2509,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0D1117),
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -2470,7 +2519,17 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
               child: GestureDetector(
                 onTap: () {
                   if (_isSubscribed) {
-                    widget.showQRScanner();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QrScannerScreen(
+                          title: 'Salon Girişi',
+                          gymId: widget.gym['id'] as String?,
+                          gymName: widget.gym['name'] as String?,
+                          gymImage: widget.gym['image'] as String?,
+                        ),
+                      ),
+                    );
                   } else {
                     _buyMembership();
                   }
@@ -2478,7 +2537,9 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                 child: Container(
                   height: 52,
                   decoration: BoxDecoration(
-                    color: _isSubscribed ? const Color(0xFF131313) : AppColors.primary,
+                    color: _isSubscribed 
+                        ? (isDark ? const Color(0xFF2E2E2E) : Colors.grey.shade200) 
+                        : AppColors.primary,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
@@ -2519,12 +2580,17 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
   }
 
   Widget _buildRatingProgressRow(String label, double score) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(width: 6),
@@ -2537,29 +2603,41 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
   }
 
   Widget _buildAmenityChip(String label, IconData icon, bool isActive) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isActive ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9), 
-          width: 1.2
+          color: isActive 
+              ? (isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0)) 
+              : (isDark ? const Color(0xFF131313) : const Color(0xFFF1F5F9)), 
+          width: 1.2,
         ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                )
+              ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon, 
-            color: isActive ? AppColors.primary : Colors.grey.shade300, 
-            size: 16
+            color: isActive ? AppColors.primary : Colors.grey.shade600, 
+            size: 16,
           ),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? const Color(0xFF0D1117) : Colors.grey.shade400,
+              color: isActive ? (isDark ? Colors.white : Colors.black) : Colors.grey.shade600,
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
               decoration: isActive ? TextDecoration.none : TextDecoration.lineThrough,
@@ -2571,22 +2649,32 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
   }
 
   Widget _buildUserRatingCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: isDark ? const Color(0xFF2E2E2E) : const Color(0xFFE2E8F0), width: 1.5),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Bu Salonu Değerlendir',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0D1117),
+              color: isDark ? Colors.white : Colors.black,
               letterSpacing: 0.5,
             ),
           ),
@@ -2597,7 +2685,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                 : 'Salonu oylamak için yıldızlara dokunun',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 16),
@@ -2617,7 +2705,7 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                       : Matrix4.identity(),
                   child: Icon(
                     isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: isSelected ? const Color(0xFFFFD60A) : Colors.grey.shade300,
+                    color: isSelected ? const Color(0xFFFFD60A) : Colors.grey.shade600,
                     size: 36,
                   ),
                 ),

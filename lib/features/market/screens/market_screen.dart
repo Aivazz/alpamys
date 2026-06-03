@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:uicons/uicons.dart';
 import '../../../common_widgets/feedback/custom_feedback.dart';
+import '../../../common_widgets/media/cached_image.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/utils/responsive.dart';
 import 'product_detail_screen.dart';
 import '../../cart/services/cart_service.dart';
 import '../../cart/screens/cart_screen.dart';
@@ -96,8 +98,8 @@ class _MarketScreenState extends State<MarketScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
+    R.init(context);
+    final topPadding = MediaQuery.paddingOf(context).top;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF131313) : const Color(0xFFF9F9F9),
@@ -643,64 +645,13 @@ class _MarketScreenState extends State<MarketScreen> {
                                   Expanded(
                                     child: Stack(
                                       children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          child: Container(
+                                         ClipRRect(
+                                          borderRadius: BorderRadius.circular(16),
+                                          child: CachedImage(
+                                            url: uiProduct['image']?.toString() ?? '',
                                             width: double.infinity,
                                             height: double.infinity,
-                                            color: isDark ? const Color(0xFF2D2D2D) : const Color(0xFFF9FAFB),
-                                            child: Image.network(
-                                              uiProduct['image']?.toString() ??
-                                                  '',
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (context, error, stackTrace) {
-                                                    return Container(
-                                                      color: const Color(
-                                                        0xFFF1F3F5,
-                                                      ),
-                                                      child: Center(
-                                                        child: Icon(
-                                                          UIcons
-                                                              .regularRounded
-                                                              .picture,
-                                                          color: Colors.grey,
-                                                          size: 24,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                              loadingBuilder:
-                                                  (
-                                                    context,
-                                                    child,
-                                                    loadingProgress,
-                                                  ) {
-                                                    if (loadingProgress == null) {
-                                                      return child;
-                                                    }
-                                                    return Container(
-                                                      color: const Color(
-                                                        0xFFF1F3F5,
-                                                      ),
-                                                      child: const Center(
-                                                        child: CircularProgressIndicator(
-                                                          valueColor:
-                                                              AlwaysStoppedAnimation<
-                                                                Color
-                                                              >(
-                                                                Color(
-                                                                  0xFFA3CB24,
-                                                                ),
-                                                              ),
-                                                          strokeWidth: 2,
-                                                        ),
-                                                      ),
-                                                    );
-                                                  },
-                                            ),
+                                            fit: BoxFit.cover,
                                           ),
                                         ),
                                         // Star Rating Badge

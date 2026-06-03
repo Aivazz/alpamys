@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../common_widgets/icons/uicons.dart';
 import '../../profile/providers/profile_provider.dart';
 
@@ -15,6 +16,7 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    R.init(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final headerBgColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFF131313);
 
@@ -22,8 +24,8 @@ class HomeHeader extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: headerBgColor,
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(32),
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(R.radiusLg),
         ),
         boxShadow: isDark
             ? [
@@ -36,10 +38,10 @@ class HomeHeader extends StatelessWidget {
             : null,
       ),
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: MediaQuery.of(context).padding.top + 12,
-        bottom: 20,
+        left: R.screenPaddingH,
+        right: R.screenPaddingH,
+        top: MediaQuery.of(context).padding.top + R.xs,
+        bottom: R.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,14 +51,14 @@ class HomeHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               IconButton(
-                icon: const UIconMenu(color: Colors.white, size: 24),
+                icon: UIconMenu(color: Colors.white, size: R.iconMd),
                 onPressed: onMenuTap,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: R.md),
           // User Greeting Info
           ListenableBuilder(
             listenable: ProfileProvider(),
@@ -69,51 +71,58 @@ class HomeHeader extends StatelessWidget {
               return Row(
                 children: [
                   CircleAvatar(
-                    radius: 28,
+                    radius: R.sp(28),
                     backgroundImage: profileProvider.getAvatarImage(),
                     backgroundColor: Colors.white30,
                   ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Merhaba, Günaydın',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                  SizedBox(width: R.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Merhaba, Günaydın',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: R.sp(13),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.location_on_rounded,
-                            color: AppColors.primary,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            displayLocation,
-                            style: const TextStyle(
+                            SizedBox(width: R.xs),
+                            const Icon(
+                              Icons.location_on_rounded,
                               color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
+                              size: 13,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$name !',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                displayLocation,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: R.sp(11),
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '$name !',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: R.sp(22),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               );

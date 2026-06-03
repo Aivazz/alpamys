@@ -359,19 +359,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
+          CachedImage(
+            url: recipe.image,
+            height: R.gymCardImageH * 0.85,
+            width: double.infinity,
             borderRadius: BorderRadius.circular(20),
-            child: Image.network(
-              recipe.image,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                height: 180,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.restaurant_rounded, size: 40, color: Colors.grey),
-              ),
-            ),
+            errorChild: Icon(Icons.restaurant_rounded, size: R.iconLg, color: Colors.grey),
           ),
           const SizedBox(height: 12),
           Text(
@@ -528,16 +521,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(16),
                           child: Stack(
                             children: [
-                              Image.network(
-                                image,
+                              CachedImage(
+                                url: image,
                                 height: 140,
                                 width: 150,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  height: 140,
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.image, size: 30, color: Colors.grey),
-                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                errorChild: Icon(Icons.image, size: R.iconLg, color: Colors.grey),
                               ),
                               Positioned(
                                 top: 8,
@@ -1081,25 +1070,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: Stack(
               children: [
-                Image.network(
-                  gym['image'] as String,
+                CachedImage(
+                  url: gym['image'] as String,
                   height: 180,
                   width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 180,
-                      width: double.infinity,
-                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(
-                          Icons.fitness_center_rounded,
-                          color: AppColors.primary,
-                          size: 40,
-                        ),
-                      ),
-                    );
-                  },
+                  errorChild: Icon(
+                    Icons.fitness_center_rounded,
+                    color: AppColors.primary,
+                    size: R.iconLg,
+                  ),
                 ),
                 Positioned.fill(
                   child: Container(

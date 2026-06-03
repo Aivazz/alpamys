@@ -519,42 +519,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Stack(
-                            children: [
-                              CachedImage(
-                                url: image,
-                                height: 140,
-                                width: 150,
-                                borderRadius: BorderRadius.circular(16),
-                                errorChild: Icon(Icons.image, size: R.iconLg, color: Colors.grey),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.65),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.star, color: Colors.amber, size: 10),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        formattedRating,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: CachedImage(
+                            url: image,
+                            height: 140,
+                            width: 150,
+                            borderRadius: BorderRadius.circular(16),
+                            errorChild: Icon(Icons.image, size: R.iconLg, color: Colors.grey),
                           ),
                         ),
                         const SizedBox(height: 8),

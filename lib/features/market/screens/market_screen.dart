@@ -654,45 +654,7 @@ class _MarketScreenState extends State<MarketScreen> {
                                             fit: BoxFit.cover,
                                           ),
                                         ),
-                                        // Star Rating Badge
-                                        Positioned(
-                                          top: 8,
-                                          left: 8,
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withOpacity(
-                                                0.3,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  UIcons.regularRounded.star,
-                                                  color: const Color(
-                                                    0xFFF59E0B,
-                                                  ),
-                                                  size: 11,
-                                                ),
-                                                const SizedBox(width: 2),
-                                                Text(
-                                                  '${uiProduct['rating']}',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        // Heart/Favorite Badge
+                                         // Heart/Favorite Badge
                                         Positioned(
                                           top: 8,
                                           right: 8,

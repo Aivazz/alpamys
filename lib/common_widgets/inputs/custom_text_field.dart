@@ -55,13 +55,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
             hintStyle: TextStyle(color: Colors.grey.shade600),
             filled: true,
             fillColor: AppColors.surface,
-            prefixIcon: widget.prefixIcon != null 
+            prefixIcon: widget.prefixIcon != null
                 ? Icon(widget.prefixIcon, color: AppColors.textSecondary)
                 : null,
             suffixIcon: widget.isPassword
                 ? IconButton(
                     icon: Icon(
-                      _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _obscureText
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: AppColors.textSecondary,
                     ),
                     onPressed: () {
@@ -70,20 +72,26 @@ class _CustomTextFieldState extends State<CustomTextField> {
                       });
                     },
                   )
-                : (widget.showCheckmark 
-                    ? const Icon(Icons.check_circle, color: AppColors.primary)
-                    : null),
+                : (widget.showCheckmark
+                      ? const Icon(Icons.check_circle, color: AppColors.primary)
+                      : null),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.surfaceLight, width: 1),
+              borderSide: const BorderSide(
+                color: AppColors.surfaceLight,
+                width: 1,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -93,7 +101,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
+            ),
           ),
         ),
       ],

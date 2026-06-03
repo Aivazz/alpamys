@@ -13,7 +13,7 @@ class SavedCard {
     required this.expiry,
   });
 
-  String get maskedNumber => '••••  ••••  ••••  $last4';
+  String get maskedNumber => '••••  ••••  ••••  ••••  $last4';
 }
 
 class CardService extends ChangeNotifier {
@@ -32,7 +32,11 @@ class CardService extends ChangeNotifier {
     final name = prefs.getString('card_name');
     final expiry = prefs.getString('card_expiry');
     if (last4 != null && name != null && expiry != null) {
-      _savedCard = SavedCard(last4: last4, cardholderName: name, expiry: expiry);
+      _savedCard = SavedCard(
+        last4: last4,
+        cardholderName: name,
+        expiry: expiry,
+      );
       notifyListeners();
     }
   }
@@ -46,7 +50,11 @@ class CardService extends ChangeNotifier {
     await prefs.setString('card_last4', last4);
     await prefs.setString('card_name', cardholderName);
     await prefs.setString('card_expiry', expiry);
-    _savedCard = SavedCard(last4: last4, cardholderName: cardholderName, expiry: expiry);
+    _savedCard = SavedCard(
+      last4: last4,
+      cardholderName: cardholderName,
+      expiry: expiry,
+    );
     notifyListeners();
   }
 
